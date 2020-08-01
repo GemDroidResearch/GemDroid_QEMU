@@ -10,11 +10,11 @@ Assume that $AOSP is your aosp folder, run the following commands to run an andr
 GemDroid.
 
     cd $AOSP
-    git clone https://github.com/GemDroidResearch/GemDroid_QEMU_Android7.git
+    git clone https://github.com/GemDroidResearch/GemDroid_QEMU.git
     cd $AOSP/sdk/emulator
     git checkout -b gemdroid cbf40c
     cd $AOSP/external
-    cp -r $AOSP/GemDroid_QEMU_Android7/GemDroid_QEMU qemu
+    cp -r $AOSP/GemDroid_QEMU/GemDroid_QEMU qemu
     cd qemu
     ./android-configure.sh
     make 
