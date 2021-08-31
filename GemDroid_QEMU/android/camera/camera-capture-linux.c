@@ -230,8 +230,6 @@ _free_framebuffers(CameraFrameBuffer* fb, int num, CameraIoType io_type)
                 break;
         }
     }
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 /*******************************************************************************
@@ -253,8 +251,6 @@ _camera_device_alloc(void)
     memset(cd, 0, sizeof(*cd));
     cd->header.opaque = cd;
     cd->handle = -1;
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 
     return cd;
 }
@@ -281,8 +277,6 @@ _camera_device_free(LinuxCameraDevice* lcd)
     } else {
         E("%s: No descriptor", __FUNCTION__);
     }
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 /* Resets camera device after capturing.
@@ -315,8 +309,6 @@ _camera_device_reset(LinuxCameraDevice* cd)
         crop.c = cropcap.defrect; /* reset to default */
         _xioctl (cd->handle, VIDIOC_S_CROP, &crop);
     }
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 /* Memory maps buffers and shares mapped memory with the device.
@@ -393,8 +385,6 @@ _camera_device_mmap_framebuffer(LinuxCameraDevice* cd)
 
     cd->io_type = CAMERA_IO_MEMMAP;
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return 0;
 }
 
@@ -460,8 +450,6 @@ _camera_device_user_framebuffer(LinuxCameraDevice* cd)
     }
 
     cd->io_type = CAMERA_IO_USERPTR;
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 
     return 0;
 }
@@ -491,8 +479,6 @@ _camera_device_direct_framebuffer(LinuxCameraDevice* cd)
     }
 
     cd->io_type = CAMERA_IO_DIRECT;
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 
     return 0;
 }
@@ -548,8 +534,6 @@ _camera_device_open(LinuxCameraDevice* cd)
         cd->handle = -1;
         return -1;
     }
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 
     return 0;
 }
@@ -608,8 +592,6 @@ _camera_device_enum_format_sizes(LinuxCameraDevice* cd,
         }
 
     }
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     if (sizes_num == 0) {
         return 0;
     }
@@ -704,8 +686,6 @@ _camera_device_enum_pixel_formats(LinuxCameraDevice* cd, QemuPixelFormat** fmts)
             fmt_num++;
         }
     }
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     if (fmt_num == 0) {
         return 0;
     }
@@ -806,8 +786,6 @@ _camera_device_get_info(LinuxCameraDevice* cd, CameraInfo* cis)
     }
     free(formats);
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return 0;
 }
 
@@ -840,8 +818,6 @@ camera_device_open(const char* name, int inp_channel)
     crop.c = cropcap.defrect; /* reset to default */
     _xioctl (cd->handle, VIDIOC_S_CROP, &crop);
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return &cd->header;
 }
 
@@ -891,8 +867,6 @@ camera_device_start_capturing(CameraDevice* ccd,
         _camera_device_reset(cd);
         return -1;
     }
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     memcpy(&cd->actual_pixel_format, &fmt.fmt.pix, sizeof(struct v4l2_pix_format));
 
     /*
@@ -962,8 +936,6 @@ camera_device_stop_capturing(CameraDevice* ccd)
       return -1;
     }
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     switch (cd->io_type) {
         case CAMERA_IO_DIRECT:
             /* Nothing to do. */
@@ -1013,8 +985,6 @@ camera_device_read_frame(CameraDevice* ccd,
       return -1;
     }
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     if (cd->io_type == CAMERA_IO_DIRECT) {
         /* Read directly from the device. */
         size_t total_read_bytes = 0;
@@ -1096,8 +1066,6 @@ camera_device_close(CameraDevice* ccd)
     } else {
         E("%s: Invalid camera device descriptor", __FUNCTION__);
     }
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 int
@@ -1127,7 +1095,5 @@ enumerate_camera_devices(CameraInfo* cis, int max)
         }
     }
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return found;
 }

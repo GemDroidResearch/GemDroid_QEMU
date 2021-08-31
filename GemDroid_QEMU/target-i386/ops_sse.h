@@ -480,7 +480,7 @@ void glue(helper_maskmov, SUFFIX)(CPUX86State *env, Reg *d, Reg *s,
 
     for (i = 0; i < (8 << SHIFT); i++) {
         if (s->B(i) & 0x80) {
-            cpu_stb_data(env, a0 + i, d->B(i), /*pras*/OTHER_TARGET_NOT_IMPLEMENTED);
+            cpu_stb_data(env, a0 + i, d->B(i));
         }
     }
 }

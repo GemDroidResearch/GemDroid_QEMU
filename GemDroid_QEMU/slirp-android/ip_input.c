@@ -38,6 +38,12 @@
  * terms and conditions of the copyright.
  */
 
+//GemDroid added
+//For GemDroid Tracer Functionality
+#include "gemdroid-tracer.h"
+//GemDroid end
+
+
 #include <slirp.h>
 #include <qemu/osdep.h>
 #include "ip_icmp.h"
@@ -236,6 +242,16 @@ ip_input(struct mbuf *m)
 	 * Switch out to protocol's input routine.
 	 */
 	STAT(ipstat.ips_delivered++);
+
+        //GemDroid added
+        //Network - Send a packet from CPU to some destination
+        if(IP_tracer)
+        {
+                printf("NW-OUT-R: 0 %ld\n",m->m_size);
+                cpu_inst_print_flag = true;
+        }
+        //GemDroid end
+
 	switch (ip->ip_p) {
 	 case IPPROTO_TCP:
 		tcp_input(m, hlen, (struct socket *)NULL);

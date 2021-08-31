@@ -268,6 +268,11 @@ typedef struct CPUARMState {
     } cp[15];
     void *nvic;
     const struct arm_boot_info *boot_info;
+    
+    //GemDroid adds - cpu instruction counter
+    unsigned long long cpu_inst_counter;
+    //GemDroid end
+
 } CPUARMState;
 
 #include "cpu-qom.h"

@@ -30,11 +30,6 @@
 #ifdef CONFIG_USER_ONLY
 #include "qemu.h"
 
-
-
-//pras
-#include "gemdroid-tracer.h"
-
 #define ARM_ANGEL_HEAP_SIZE (128 * 1024 * 1024)
 #else
 #include "qemu-common.h"
@@ -164,7 +159,7 @@ static void arm_semi_flen_cb(CPUState *cpu, target_ulong ret, target_ulong err)
        the value. We assume the size always fit in 32 bits.  */
     CPUARMState *env = cpu->env_ptr;
     uint32_t size;
-    cpu_memory_rw_debug(cpu, env->regs[13]-64+32, (uint8_t *)&size, 4, 0, /*pras*/MEM_REQ_SEMI);
+    cpu_memory_rw_debug(cpu, env->regs[13]-64+32, (uint8_t *)&size, 4, 0);
     env->regs[0] = be32_to_cpu(size);
 #ifdef CONFIG_USER_ONLY
     ((TaskState *)env->opaque)->swi_errno = err;

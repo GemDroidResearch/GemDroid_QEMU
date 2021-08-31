@@ -78,18 +78,10 @@
 #define ADDR_READ addr_read
 #endif
 
-//pras
-#include "gemdroid-tracer.h"
-
-extern int matchMeInPidTid(CPUArchState *env);
-extern void addPrintTid(CPUArchState *env, int);
-extern int getMeContextId(CPUArchState *env);
-extern int getMePCVal(CPUArchState *env);
-extern int twoAts;
 /* generic load/store macros */
 
 static inline RES_TYPE
-glue(glue(cpu_ld, USUFFIX), MEMSUFFIX)(CPUArchState *env, target_ulong ptr, MEM_REQ_ORIGIN mem_req)
+glue(glue(cpu_ld, USUFFIX), MEMSUFFIX)(CPUArchState *env, target_ulong ptr)
 {
     int page_index;
     RES_TYPE res;
@@ -101,23 +93,17 @@ glue(glue(cpu_ld, USUFFIX), MEMSUFFIX)(CPUArchState *env, target_ulong ptr, MEM_
     mmu_idx = CPU_MMU_INDEX;
     if (unlikely(env->tlb_table[mmu_idx][page_index].ADDR_READ !=
                  (addr & (TARGET_PAGE_MASK | (DATA_SIZE - 1))))) {
-        res = glue(glue(helper_ld, SUFFIX), MMUSUFFIX)(env, addr, mmu_idx, /*pras*/mem_req);
+        res = glue(glue(helper_ld, SUFFIX), MMUSUFFIX)(env, addr, mmu_idx);
     } else {
         uintptr_t hostaddr = addr + env->tlb_table[mmu_idx][page_index].addend;
-        res = glue(glue(ld, USUFFIX), _raw)(hostaddr, mem_req);
+        res = glue(glue(ld, USUFFIX), _raw)(hostaddr);
     }
-	//pras_mmu
-	//addr > 4 implies it is not fetching the next inst to execute.
-	if(mem_req == MEM_REQ_ARM_HELPER && twoAts && matchMeInPidTid(env))
-	{
-		printf("@@ %d, ld(%x,%x=%lf) (%d==%d)2\n",getMeContextId(env), getMePCVal(env), addr, (double)res, mem_req, MEM_REQ_DISAS);
-	}
     return res;
 }
 
 #if DATA_SIZE <= 2
 static inline int
-glue(glue(cpu_lds, SUFFIX), MEMSUFFIX)(CPUArchState *env, target_ulong ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+glue(glue(cpu_lds, SUFFIX), MEMSUFFIX)(CPUArchState *env, target_ulong ptr)
 {
     int res, page_index;
     target_ulong addr;
@@ -129,16 +115,11 @@ glue(glue(cpu_lds, SUFFIX), MEMSUFFIX)(CPUArchState *env, target_ulong ptr, /*pr
     if (unlikely(env->tlb_table[mmu_idx][page_index].ADDR_READ !=
                  (addr & (TARGET_PAGE_MASK | (DATA_SIZE - 1))))) {
         res = (DATA_STYPE)glue(glue(helper_ld, SUFFIX),
-                               MMUSUFFIX)(env, addr, mmu_idx, /*pras*/mem_req);
+                               MMUSUFFIX)(env, addr, mmu_idx);
     } else {
         uintptr_t hostaddr = addr + env->tlb_table[mmu_idx][page_index].addend;
-        res = glue(glue(lds, SUFFIX), _raw)(hostaddr, /*pras*/mem_req);
+        res = glue(glue(lds, SUFFIX), _raw)(hostaddr);
     }
-	//pras_mmu
-	if(mem_req == MEM_REQ_ARM_HELPER && twoAts && matchMeInPidTid(env))
-	{
-		printf("@@ %d, ld(%x,%x=%lf) (%d==%d)1\n",getMeContextId(env), getMePCVal(env), addr, mem_req, MEM_REQ_DISAS);//, (double)res, STRINGIFY(SUFFIX), STRINGIFY(MEMSUFFIX));
-	}
     return res;
 }
 #endif
@@ -146,11 +127,10 @@ glue(glue(cpu_lds, SUFFIX), MEMSUFFIX)(CPUArchState *env, target_ulong ptr, /*pr
 #if ACCESS_TYPE != (NB_MMU_MODES + 1)
 
 /* generic store macro */
-//pras
-//not working #ifdef TARGET_ARM
+
 static inline void
 glue(glue(cpu_st, SUFFIX), MEMSUFFIX)(CPUArchState *env, target_ulong ptr,
-                                      RES_TYPE v, /*pras*/MEM_REQ_ORIGIN mem_req)
+                                      RES_TYPE v)
 {
     int page_index;
     target_ulong addr;
@@ -161,19 +141,12 @@ glue(glue(cpu_st, SUFFIX), MEMSUFFIX)(CPUArchState *env, target_ulong ptr,
     mmu_idx = CPU_MMU_INDEX;
     if (unlikely(env->tlb_table[mmu_idx][page_index].addr_write !=
                  (addr & (TARGET_PAGE_MASK | (DATA_SIZE - 1))))) {
-        glue(glue(helper_st, SUFFIX), MMUSUFFIX)(env, addr, v, mmu_idx, /*pras*/mem_req);
+        glue(glue(helper_st, SUFFIX), MMUSUFFIX)(env, addr, v, mmu_idx);
     } else {
         uintptr_t hostaddr = addr + env->tlb_table[mmu_idx][page_index].addend;
-        glue(glue(st, SUFFIX), _raw)(hostaddr, v, mem_req);
+        glue(glue(st, SUFFIX), _raw)(hostaddr, v);
     }
-	//pras_mmu
-	if(mem_req == MEM_REQ_ARM_HELPER && twoAts && matchMeInPidTid(env))
-	{
-		printf("@@ %d, st(%x,%x=%lf) (%d==%d)3\n",getMeContextId(env), getMePCVal(env), addr, (double)v, mem_req, MEM_REQ_DISAS);
-	}
 }
-
-
 
 #endif /* ACCESS_TYPE != (NB_MMU_MODES + 1) */
 
@@ -181,53 +154,49 @@ glue(glue(cpu_st, SUFFIX), MEMSUFFIX)(CPUArchState *env, target_ulong ptr,
 
 #if DATA_SIZE == 8
 static inline float64 glue(cpu_ldfq, MEMSUFFIX)(CPUArchState *env,
-                                                target_ulong ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+                                                target_ulong ptr)
 {
     union {
         float64 d;
         uint64_t i;
     } u;
-    u.i = glue(cpu_ldq, MEMSUFFIX)(env, ptr, /*pras*/mem_req);
+    u.i = glue(cpu_ldq, MEMSUFFIX)(env, ptr);
     return u.d;
 }
 
-//pras
-//not workign #ifdef TARGET_ARM
 static inline void glue(cpu_stfq, MEMSUFFIX)(CPUArchState *env,
-                                             target_ulong ptr, float64 v, /*pras*/MEM_REQ_ORIGIN mem_req)
+                                             target_ulong ptr, float64 v)
 {
     union {
         float64 d;
         uint64_t i;
     } u;
     u.d = v;
-    glue(cpu_stq, MEMSUFFIX)(env, ptr, u.i, /*pras*/mem_req);
+    glue(cpu_stq, MEMSUFFIX)(env, ptr, u.i);
 }
 #endif /* DATA_SIZE == 8 */
 
 #if DATA_SIZE == 4
 static inline float32 glue(cpu_ldfl, MEMSUFFIX)(CPUArchState *env,
-                                                target_ulong ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+                                                target_ulong ptr)
 {
     union {
         float32 f;
         uint32_t i;
     } u;
-    u.i = glue(cpu_ldl, MEMSUFFIX)(env, ptr, /*pras*/mem_req);
+    u.i = glue(cpu_ldl, MEMSUFFIX)(env, ptr);
     return u.f;
 }
 
-//pras
-//not working #ifdef TARGET_ARM
 static inline void glue(cpu_stfl, MEMSUFFIX)(CPUArchState *env,
-                                             target_ulong ptr, float32 v, /*pras*/MEM_REQ_ORIGIN mem_req)
+                                             target_ulong ptr, float32 v)
 {
     union {
         float32 f;
         uint32_t i;
     } u;
     u.f = v;
-    glue(cpu_stl, MEMSUFFIX)(env, ptr, u.i, /*pras*/mem_req);
+    glue(cpu_stl, MEMSUFFIX)(env, ptr, u.i);
 }
 #endif /* DATA_SIZE == 4 */
 

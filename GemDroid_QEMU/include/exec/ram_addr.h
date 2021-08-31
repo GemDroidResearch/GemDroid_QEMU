@@ -111,7 +111,7 @@ static inline void cpu_physical_memory_set_dirty_lebitmap(unsigned long *bitmap,
 
         for (k = 0; k < nr; k++) {
             if (bitmap[k]) {
-                unsigned long temp = leul_to_cpu(bitmap[k], /*pras*/MEM_REQ_DIRTY_BITMAP);
+                unsigned long temp = leul_to_cpu(bitmap[k]);
 
                 ram_list.dirty_memory[DIRTY_MEMORY_MIGRATION][page + k] |= temp;
                 ram_list.dirty_memory[DIRTY_MEMORY_VGA][page + k] |= temp;
@@ -126,7 +126,7 @@ static inline void cpu_physical_memory_set_dirty_lebitmap(unsigned long *bitmap,
          */
         for (i = 0; i < len; i++) {
             if (bitmap[i] != 0) {
-                c = leul_to_cpu(bitmap[i], /*pras*/MEM_REQ_DIRTY_BITMAP);
+                c = leul_to_cpu(bitmap[i]);
                 do {
                     j = ffsl(c) - 1;
                     c &= ~(1ul << j);

@@ -58,8 +58,6 @@ _hw_control_qemud_client_recv( void*         opaque,
                                QemudClient*  client )
 {
     hw_control_do_query(opaque, msg, msglen);
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 /* called when a qemud client connects to the service */
@@ -77,8 +75,6 @@ _hw_control_qemud_connect( void*  opaque,
                                NULL, NULL, NULL );
 
     qemud_client_set_framing(client, 1);
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return client;
 }
 
@@ -88,8 +84,6 @@ if_starts_with( uint8_t*  buf, int buflen, const char*  prefix )
 {
     int  prefixlen = strlen(prefix);
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     if (buflen < prefixlen || memcmp(buf, prefix, prefixlen))
         return NULL;
 
@@ -104,8 +98,6 @@ hw_control_do_query( HwControl*  h,
 {
     uint8_t*   q;
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     T("%s: query %4d '%.*s'", __FUNCTION__, querylen, querylen, query );
 
     q = if_starts_with( query, querylen, "power:light:brightness:" );
@@ -137,8 +129,6 @@ hw_control_init( HwControl*                    control,
                                                     control,
                                                     _hw_control_qemud_connect,
                                                     NULL, NULL);
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 const AndroidHwControlFuncs  defaultControls = {
@@ -150,8 +140,6 @@ static HwControl   hwstate[1];
 void
 android_hw_control_init( void )
 {
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     hw_control_init(hwstate, NULL, &defaultControls);
     D("%s: hw-control qemud handler initialized", __FUNCTION__);
 }
@@ -161,7 +149,5 @@ android_hw_control_set( void*  opaque, const AndroidHwControlFuncs*  funcs )
 {
     hwstate->client       = opaque;
     hwstate->client_funcs = funcs[0];
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 

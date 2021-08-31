@@ -1,4 +1,3 @@
-
 /* Copyright (C) 2007-2008 The Android Open Source Project
 **
 ** This software is licensed under the terms of the GNU General Public
@@ -14,7 +13,6 @@
 #include "android/utils/bufprint.h"
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 typedef struct {
     const char*  name;
@@ -83,8 +81,6 @@ eventList_findByType( int  type )
         if (_codes[nn].type == type)
             return _codes[nn].table;
     }
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return NULL;
 }
 
@@ -99,8 +95,6 @@ eventList_getCount( EventList  list )
     for (nn = 0; list[nn].name != NULL; nn++) {
         /* nothing */
     }
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return nn;
 }
 
@@ -109,8 +103,6 @@ eventList_findCodeByName( EventList    list,
                           const char*  name,
                           int          namelen )
 {
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     if (namelen <= 0)
         return -1;
 
@@ -130,8 +122,6 @@ eventList_bufprintCode( EventList  list,
                         char*      buf,
                         char*      bufend )
 {
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     if (list == NULL)
         return buf;
 
@@ -161,8 +151,6 @@ android_event_from_str( const char*  name,
     if (q == NULL || q > pend)
         q = pend;
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     *ptype = eventList_findCodeByName( _ev_types_tab, p, q-p );
     if (*ptype < 0) {
         *ptype = (int) strtol( p, &end, 0 );
@@ -208,16 +196,12 @@ android_event_from_str( const char*  name,
 int
 android_event_get_type_count( void )
 {
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return eventList_getCount( _ev_types_tab );
 }
 
 char*
 android_event_bufprint_type_str( char*  buff, char*  end, int  type_index )
 {
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return eventList_bufprintCode( _ev_types_tab, type_index, buff, end );
 }
 
@@ -227,8 +211,6 @@ android_event_get_code_count( int  type )
 {
     EventList  list = eventList_findByType(type);
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return eventList_getCount(list);
 }
 
@@ -237,8 +219,6 @@ android_event_bufprint_code_str( char*  buff, char*  end, int  type, int  code_i
 {
     EventList  list = eventList_findByType(type);
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return eventList_bufprintCode(list, code_index, buff, end);
 }
 

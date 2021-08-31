@@ -18,6 +18,11 @@
  * Contains emulated camera service implementation.
  */
 
+//GemDroid added
+//For GemDroid Tracer Functionality
+#include "gemdroid-tracer.h"
+//GemDroid end
+
 #include "qemu-common.h"
 #include "android/globals.h"  /* for android_hw */
 #include "android/hw-qemud.h"
@@ -108,8 +113,6 @@ _parse_query(const char* query,
         *query_param = (*qend == '\0') ? NULL : qend;
     }
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return 0;
 }
 
@@ -152,8 +155,6 @@ _append_string(char** str_buf, size_t* str_buf_size, const char* str)
         *str_buf = new_buf;
         *str_buf_size = required_mem;
     }
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     memcpy(*str_buf + offset, str, append_bytes);
 
     return 0;
@@ -178,8 +179,6 @@ _camera_info_to_string(const CameraInfo* ci, char** str, size_t* str_size) {
     int res;
     int n;
     char tmp[128];
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 
     /* Append device name. */
     snprintf(tmp, sizeof(tmp), "name=%s ", ci->device_name);
@@ -244,8 +243,6 @@ _camera_info_get_by_display_name(const char* disp_name, CameraInfo* arr, int num
             return &arr[n];
         }
     }
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return NULL;
 }
 
@@ -267,8 +264,6 @@ _camera_info_get_by_device_name(const char* device_name, CameraInfo* arr, int nu
             return &arr[n];
         }
     }
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return NULL;
 }
 
@@ -291,8 +286,6 @@ _wecam_setup(CameraServiceDesc* csd,
              CameraInfo* ci,
              int ci_cnt)
 {
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     /* Find webcam record in the list of enumerated web cameras. */
     CameraInfo* found = _camera_info_get_by_display_name(disp_name, ci, ci_cnt);
     if (found == NULL) {
@@ -332,8 +325,6 @@ _camera_service_init(CameraServiceDesc* csd)
     memset(csd->camera_info, 0, sizeof(CameraInfo) * MAX_CAMERA);
     csd->camera_count = 0;
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     /* Lets see if HW config uses web cameras. */
     if (memcmp(android_hw->hw_camera_back, "webcam", 6) &&
         memcmp(android_hw->hw_camera_front, "webcam", 6)) {
@@ -371,8 +362,6 @@ static CameraInfo*
 _camera_service_get_camera_info_by_device_name(CameraServiceDesc* cs,
                                                const char* device_name)
 {
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return _camera_info_get_by_device_name(device_name, cs->camera_info,
                                            cs->camera_count);
 }
@@ -394,8 +383,6 @@ _qemu_client_reply_payload(QemudClient* qc, size_t payload_size)
     char payload_size_str[9];
     snprintf(payload_size_str, sizeof(payload_size_str), "%08zx", payload_size);
     qemud_client_send(qc, (const uint8_t*)payload_size_str, 8);
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 /*
@@ -459,8 +446,6 @@ _qemu_client_query_reply(QemudClient* qc,
     if (extra != NULL) {
         qemud_client_send(qc, (const uint8_t*)extra, extra_size);
     }
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 /* Replies query success ("OK") back to the client.
@@ -473,8 +458,6 @@ _qemu_client_reply_ok(QemudClient* qc, const char* ok_str)
 {
     _qemu_client_query_reply(qc, 1, ok_str,
                              (ok_str != NULL) ? (strlen(ok_str) + 1) : 0);
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 /* Replies query failure ("KO") back to the client.
@@ -487,8 +470,6 @@ _qemu_client_reply_ko(QemudClient* qc, const char* ko_str)
 {
     _qemu_client_query_reply(qc, 0, ko_str,
                              (ko_str != NULL) ? (strlen(ko_str) + 1) : 0);
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 /********************************************************************************
@@ -511,8 +492,6 @@ _factory_client_list_cameras(CameraServiceDesc* csd, QemudClient* client)
     size_t reply_size = 0;
     char* reply = NULL;
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     /* Lets see if there was anything found... */
     if (csd->camera_count == 0) {
         /* No cameras connected to the host. Reply with "\n" */
@@ -565,8 +544,6 @@ _factory_client_recv(void*         opaque,
     char query_name[64];
     const char* query_param = NULL;
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     /* Parse the query, extracting query name and parameters. */
     if (_parse_query((const char*)msg, query_name, sizeof(query_name),
                      &query_param)) {
@@ -644,8 +621,6 @@ struct CameraClient
 static void
 _camera_client_free(CameraClient* cc)
 {
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     /* The only exception to the "read only" rule: we have to mark the camera
      * as being not used when we destroy a service for it. */
     if (cc->camera_info != NULL) {
@@ -683,8 +658,6 @@ _camera_client_create(CameraServiceDesc* csd, const char* param)
     int res;
     ANEW0(cc);
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     /*
      * Parse parameter string, containing camera client properties.
      */
@@ -757,8 +730,6 @@ _camera_client_create(CameraServiceDesc* csd, const char* param)
 static void
 _camera_client_query_connect(CameraClient* cc, QemudClient* qc, const char* param)
 {
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     if (cc->camera != NULL) {
         /* Already connected. */
         W("%s: Camera '%s' is already connected", __FUNCTION__, cc->device_name);
@@ -790,8 +761,6 @@ _camera_client_query_disconnect(CameraClient* cc,
                                 QemudClient* qc,
                                 const char* param)
 {
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     if (cc->camera == NULL) {
         /* Already disconnected. */
         W("%s: Camera '%s' is already disconnected", __FUNCTION__, cc->device_name);
@@ -835,8 +804,6 @@ _camera_client_query_start(CameraClient* cc, QemudClient* qc, const char* param)
     char dim[64];
     int width, height, pix_format;
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     /* Sanity check. */
     if (cc->camera == NULL) {
         /* Not connected. */
@@ -994,8 +961,6 @@ _camera_client_query_start(CameraClient* cc, QemudClient* qc, const char* param)
 static void
 _camera_client_query_stop(CameraClient* cc, QemudClient* qc, const char* param)
 {
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     if (cc->video_frame == NULL) {
         /* Not started. */
         W("%s: Camera '%s' is not started", __FUNCTION__, cc->device_name);
@@ -1045,8 +1010,6 @@ _camera_client_query_frame(CameraClient* cc, QemudClient* qc, const char* param)
     float r_scale = 1.0f, g_scale = 1.0f, b_scale = 1.0f, exp_comp = 1.0f;
     char tmp[256];
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     /* Sanity check. */
     if (cc->video_frame == NULL) {
         /* Not started. */
@@ -1172,11 +1135,32 @@ _camera_client_query_frame(CameraClient* cc, QemudClient* qc, const char* param)
     /* After that send video frame (if requested). */
     if (video_size) {
         qemud_client_send(qc, cc->video_frame, video_size);
+
+        //GemDroid added - camera size
+        //printf("CAM-IN-VID: Write_to DRAM:%d \n", video_size);
+        //printf("CAM-IN: Send payload of size :%d \n", payload_size);
+        if(IP_tracer)
+        {
+                printf("CAM-IN-W: 0 %d \n", payload_size);
+                cpu_inst_print_flag = true;
+        }
+        //GemDroid end
+
     }
 
     /* After that send preview frame (if requested). */
     if (preview_size) {
         qemud_client_send(qc, (const uint8_t*)cc->preview_frame, preview_size);
+
+        //GemDroid added - camera size
+        //printf("CAM-IN-VID: Write_to DRAM:%d \n", video_size);
+        //printf("CAM-IN: Send payload of size :%d \n", payload_size);
+        if(IP_tracer)
+        {
+                printf("CAM-IN-W: 0 %d \n", preview_size);
+        }
+        //GemDroid end
+
     }
 }
 
@@ -1217,8 +1201,6 @@ _camera_client_recv(void*         opaque,
     const char* query_param = NULL;
     CameraClient* cc = (CameraClient*)opaque;
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     /*
      * Emulated camera queries are formatted as such:
      *  "<query name> [<parameters>]"
@@ -1263,8 +1245,6 @@ _camera_client_close(void* opaque)
     D("%s: Camera client for device '%s' on input channel %d is now closed",
       __FUNCTION__, cc->device_name, cc->inp_channel);
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     _camera_client_free(cc);
 }
 
@@ -1291,8 +1271,6 @@ _camera_service_connect(void*          opaque,
     QemudClient*  client = NULL;
     CameraServiceDesc* csd = (CameraServiceDesc*)opaque;
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     D("%s: Connecting camera client '%s'",
       __FUNCTION__, client_param ? client_param : "Factory");
     if (client_param == NULL || *client_param == '\0') {
@@ -1318,8 +1296,6 @@ android_camera_service_init(void)
 {
     static int _inited = 0;
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     if (!_inited) {
         _camera_service_init(&_camera_service_desc);
         QemudService*  serv = qemud_service_register( SERVICE_NAME, 0,
@@ -1348,8 +1324,6 @@ android_list_web_cameras(void)
         return;
     }
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     printf("List of web cameras connected to the computer:\n");
     for (i = 0; i < connected_cnt; i++) {
         printf(" Camera '%s' is connected to device '%s' on channel %d using pixel format '%.4s'\n",

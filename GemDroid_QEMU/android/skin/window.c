@@ -30,7 +30,6 @@
 #include "gemdroid-tracer.h"
 //GemDroid end
 
-
 /* when shrinking, we reduce the pixel ratio by this fixed amount */
 #define  SHRINK_SCALE  0.6
 
@@ -1650,23 +1649,111 @@ skin_window_process_event(SkinWindow*  window, SkinEvent* ev)
                 skin_window_redraw( window, &button->rect );
                 window->button.pressed = button;
                 if(button->keycode) {
-                  	//Gemdroid Added
-                	//If it's one of GemDroid's defined keys, dont do the keys' original
-                	// corresponding actions!
-                	// A better method would be to accept a string of inputs (like a password) to decide what to do.
-                	//Example: 2 presses to Call button, and 2 press to end call triggers recording of device's traces.
 
-                	//Volume Up Button Pressed Action
-                    if(button->keycode == KEY_SEND)
-  					{
-  						if(CPU_tracer== 1)
-  							CPU_tracer=0;
-  						else if(CPU_tracer== 0)
-  							CPU_tracer=1;
-						printf("CPU_tracer=%d\n", CPU_tracer);
-  						break;
-					}
+                        //Gemdroid Added
+                        //If it's one of GemDroid's defined keys, dont do the keys' original
+                        // corresponding actions!
+                        // A better method would be to accept a string of inputs (like a passwor     d) to decide what to do.
+                        //Example: 2 presses to Call button, and 2 press to end call triggers re     cording of device's traces.
+
+                        //Volume Up Button Pressed Action
+                       if(button->keycode == KEY_VOLUMEUP)
+                                        {
+                                                if(IP_tracer == 0)
+                                                        IP_tracer=1;
+                                                else if(IP_tracer== 1)
+                                                        IP_tracer=0;
+                                                printf("IP tracing: %d\n",IP_tracer);
+                                                mmu1_ld=0;
+                                                mmu2_ld=0;
+                                                IO_ld=0;
+                                                mmu1_st=0;
+                                                mmu2_st=0;
+                                                IO_st=0;
+                                                total_insts=0;
+                                                cpu_cycles=0;
+                                                cache_hits = 0;
+                                                cache_misses = 0;
+                                                this_phase_l1_miss = 0;
+                                                this_phase_l1_access = 0;
+                                                this_phase_l2_miss = 0;
+
+                                                break;
+                                        }
+                       else if(button->keycode == KEY_VOLUMEDOWN)
+                              {
+                               if(MMU_tracer== 1)
+                                     {
+                                               MMU_tracer=0;
+					       printf("MMU tracing: %d\n",MMU_tracer);
+                                               printf("MMU1_LD: %ld\n", mmu1_ld);
+                                               printf("MMU2_LD: %ld\n", mmu2_ld);
+                                               printf("IO_LD: %ld\n", IO_ld);
+                                               printf("MMU1_ST: %ld\n", mmu1_st);
+                                               printf("MMU2_ST: %ld\n", mmu2_st);
+                                               printf("IO_ST: %ld\n", IO_st);
+                                               printf("CPU_Insts: %llu\n", total_insts)     ;
+                                               printf("New CPU_Insts: %llu\n", new_total_insts);
+                                      }
+                                else if(MMU_tracer == 0)
+                                      {
+                                                        MMU_tracer=1;
+							printf("MMU tracing: %d\n",MMU_tracer);
+                                                        mmu1_ld=0;
+                                                        mmu2_ld=0;
+                                                        IO_ld=0;
+                                                        mmu1_st=0;
+                                                        mmu2_st=0;
+                                                        IO_st=0;
+                                                        total_insts=0;
+                                                        cpu_cycles=0;
+                                                        cache_hits = 0;
+                                                        cache_misses = 0;
+                                                        this_phase_l1_miss = 0;
+                                                        this_phase_l1_access = 0;
+                                                        this_phase_l2_miss = 0;
+                                        }
+
+                                   if(ICOUNT_tracer== 0)
+                                        {
+                                                        ICOUNT_tracer=1;
+						printf("ICOUNT tracing: %d\n",ICOUNT_tracer);
+                                                        mmu1_ld=0;
+                                                        mmu2_ld=0;
+                                                        IO_ld=0;
+                                                        mmu1_st=0;
+                                                        mmu2_st=0;
+                                                        IO_st=0;
+                                                        total_insts=0;
+                                                        cpu_cycles=0;
+                                                        cache_hits = 0;
+                                                        cache_misses = 0;
+                                                        this_phase_l1_miss = 0;
+                                                        this_phase_l1_access = 0;
+                                                        this_phase_l2_miss = 0;
+                                         }
+                                     else if(ICOUNT_tracer== 1)
+                                         {
+                                                        ICOUNT_tracer=0;
+						printf("ICOUNT tracing: %d\n",ICOUNT_tracer);
+                                          }
+                                          break;
+                                   }
+                    else if(button->keycode == KEY_SEND)
+                                        {
+                                                if(CPU_tracer== 1)
+                                                        CPU_tracer=0;
+                                                else if(CPU_tracer== 0)
+                                                        CPU_tracer=1;
+                                                break;
+                                        }
+                    else if(button->keycode == KEY_END)
+                                        {
+                                                break;
+                                        }
                     //GemDroid end
+
+
                     window->win_funcs->key_event(button->keycode, 1);
                 }
             }

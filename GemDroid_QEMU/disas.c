@@ -4,12 +4,15 @@
 #include "elf.h"
 #include <errno.h>
 
+#include "cpu.h"
+#include "disas/disas.h"
+
+
 //GemDroid added
 //For GemDroid Tracer Functionality
 #include "gemdroid-tracer.h"
 //GemDroid end
-#include "cpu.h"
-#include "disas/disas.h"
+
 
 typedef struct CPUDebug {
     struct disassemble_info info;
@@ -18,619 +21,7 @@ typedef struct CPUDebug {
 
 /* Filled in by elfload.c.  Simplistic, but will do for now. */
 struct syminfo *syminfos = NULL;
-//pras adds all these
-int allPidsChecked[10000];
-int allPidsLength = 0;
-#ifdef TARGET_ARM
-struct CPUARMState *myPrevState = NULL;
-#endif
-#define print_fields_arm(field, format) do {if(my_env->field != myPrevState->field){printf(#field" = "#format" ", my_env->field); myPrevState->field = my_env->field;} } while(0)
-void printFloatStatus(CPUArchState *env, int my_byte_index, char  dest[3000])
-{
 
-#ifdef TARGET_ARM
-	CPUARMState *my_env = (CPUARMState *)env;
-	//printf("fp_status: ");
-	print_fields_arm(vfp.fp_status.float_detect_tininess, %d);
-    print_fields_arm(vfp.fp_status.float_rounding_mode, %d);
-    print_fields_arm(vfp.fp_status.float_exception_flags, %d);
-    print_fields_arm(vfp.fp_status.floatx80_rounding_precision, %d);
-    print_fields_arm(vfp.fp_status.flush_to_zero, %d);
-    print_fields_arm(vfp.fp_status.flush_inputs_to_zero, %u);
-    print_fields_arm(vfp.fp_status.default_nan_mode, %u);
-	//printf("std_fp_status: ");
-    print_fields_arm(vfp.standard_fp_status.float_detect_tininess, %d);
-    print_fields_arm(vfp.standard_fp_status.float_rounding_mode, %d);
-    print_fields_arm(vfp.standard_fp_status.float_exception_flags, %d);
-    print_fields_arm(vfp.standard_fp_status.floatx80_rounding_precision, %d);
-    print_fields_arm(vfp.standard_fp_status.flush_to_zero, %d);
-    print_fields_arm(vfp.standard_fp_status.flush_inputs_to_zero, %u);
-    print_fields_arm(vfp.standard_fp_status.default_nan_mode, %u);
-
-
-#endif
-	printf("\n");
-}
-void printRegisters(CPUArchState *env, const char *text)
-{
-	printf(text);
-	//it works, but a bit laaaaaaaaaater
-	//printf("very happy!!!!\n");
-	//exit(0);
-#ifdef TARGET_ARM
-	char dest[3000] = "";
-	int my_index = 0;
-	if(myPrevState == NULL)
-	{
-		myPrevState = (struct CPUARMState *)calloc(sizeof(struct CPUARMState),1);
-	}
-	CPUARMState *my_env = (CPUARMState *)env;
-	int i = 0;
-	for(i = 0; i < 16; i++)
-	{
-		//sprintf(dest, "r%d = %u ", i, my_env->regs[i]);
-		if(my_env->regs[i] != myPrevState->regs[i])
-		{
-			printf("r%d = %x ", i, my_env->regs[i]);
-			myPrevState->regs[i] = my_env->regs[i];
-		}
-		//print_fields_arm(regs[i], %u);
-	}
-	sprintf(dest, "uncached_cpsr = %x ", my_env->uncached_cpsr);
-	sprintf(dest, "spsr = %x ", my_env->spsr);
-	for(i = 0; i < 7; i++)
-	{
-		//print_fields_arm(banked_spsr[i], %u);
-		//print_fields_arm(banked_r13[i], %u);
-		//print_fields_arm(banked_r14[i], %u);
-		if(my_env->banked_spsr[i] != myPrevState->banked_spsr[i])
-		{
-			printf("b_spsr%d = %x ", i, my_env->banked_spsr[i]);
-			myPrevState->banked_spsr[i] = my_env->banked_spsr[i];
-		}
-		if(my_env->banked_r13[i] != myPrevState->banked_r13[i])
-		{
-			printf("b_r13_%d = %x ", i, my_env->banked_r13[i]);
-			myPrevState->banked_r13[i] = my_env->banked_r13[i];
-		}
-		if(my_env->banked_r14[i] != myPrevState->banked_r14[i])
-		{
-			printf("b_r14_%d = %x ", i, my_env->banked_r14[i]);
-			myPrevState->banked_r14[i] = my_env->banked_r14[i];
-		}
-	//	sprintf(dest, "b_spsr%d = %u ", i, my_env->banked_spsr[i]);
-	//	sprintf(dest, "b_r13_%d = %u ", i, my_env->banked_r13[i]);
-	//	sprintf(dest, "b_r14_%d = %u ", i, my_env->banked_r14[i]);
-	}
-	for(i = 0; i < 5; i++)
-	{
-		if(my_env->usr_regs[i] != myPrevState->usr_regs[i])
-		{
-			printf("usr_regs[%d] = %x ", i, my_env->usr_regs[i]);
-			myPrevState->usr_regs[i] = my_env->usr_regs[i];
-		}
-		if(my_env->fiq_regs[i] != myPrevState->fiq_regs[i])
-		{
-			printf("fiq_regs[%d] = %x ", i, my_env->fiq_regs[i]);
-			myPrevState->fiq_regs[i] = my_env->fiq_regs[i];
-		}
-		//sprintf(dest, "usr_regs[%d] = %u ", i, my_env->usr_regs[i]);
-		//sprintf(dest, "fiq_regs[%d] = %u ", i, my_env->fiq_regs[i]);
-	}
-	//printf("cp15: ");
-//	c2_base0 = %u c2_base1 = %u c2_control = %u c2_mask = %u c2_base_mask = %u "
-//			"c5_insn = %u c5_data = %u c13_tls1 = %u c13_tls2 = %u c13_tls3 = %u "
-//			"v7m: other_sp = %u vecbase = %u basepri = %u control = %u current_sp = %u "
-//			"exception = %d pending_exception = %d "
-//			"vfp: vec_len = %d vec_stride = %d ", 
-	print_fields_arm(cp15.c0_cpuid, %u);
-	print_fields_arm(cp15.c0_cachetype, %u);
-	for(i = 0; i < 16; i++)
-	{
-		if(myPrevState->cp15.c0_ccsid[i] != my_env->cp15.c0_ccsid[i])
-		{
-			printf("cp15.c0_ccsid[%d]=%u ", i, my_env->cp15.c0_ccsid[i]);
-			myPrevState->cp15.c0_ccsid[i] = my_env->cp15.c0_ccsid[i];
-		}
-	}
-	print_fields_arm(cp15.c0_clid, %u);
-	print_fields_arm(cp15.c0_cssel, %u);
-	for(i = 0; i < 8; i++)
-	{
-		if(myPrevState->cp15.c0_c1[i] != my_env->cp15.c0_c1[i])
-		{
-			printf("cp15.c0_c1[%d]=%u ", i, my_env->cp15.c0_c1[i]);
-			myPrevState->cp15.c0_c1[i] = my_env->cp15.c0_c1[i];
-		}
-		if(myPrevState->cp15.c0_c2[i] != my_env->cp15.c0_c2[i])
-		{
-			printf("cp15.c0_c2[%d]=%u ", i,  my_env->cp15.c0_c2[i]);
-			myPrevState->cp15.c0_c2[i] = my_env->cp15.c0_c2[i];
-		}
-	}
-	print_fields_arm(cp15.c1_sys, %u);
-	print_fields_arm(cp15.c1_coproc, %u);
-	print_fields_arm(cp15.c1_xscaleauxcr, %u);
-	print_fields_arm(cp15.c1_secfg, %u);
-	print_fields_arm(cp15.c1_sedbg, %u);
-	print_fields_arm(cp15.c1_nseac, %u);
-	print_fields_arm(cp15.c2_base0, %u);
-	print_fields_arm(cp15.c2_base1, %u);
-	print_fields_arm(cp15.c2_control, %u);
-	print_fields_arm(cp15.c2_mask, %u);
-	print_fields_arm(cp15.c2_base_mask, %u);
-	print_fields_arm(cp15.c2_insn, %u);
-	print_fields_arm(cp15.c2_data, %u);
-	print_fields_arm(cp15.c3, %u);
-	print_fields_arm(cp15.c5_insn, %u);
-	print_fields_arm(cp15.c5_data, %u);
-	for(i = 0; i < 8; i++)
-	{
-		if(myPrevState->cp15.c6_region[i] != my_env->cp15.c6_region[i])
-		{
-			printf("cp15.c6_region[%d]=%u ", i,  my_env->cp15.c6_region[i]);
-			myPrevState->cp15.c6_region[i] = my_env->cp15.c6_region[i];
-		}
-	}
-	print_fields_arm(cp15.c6_insn, %u);
-	print_fields_arm(cp15.c6_data, %u);
-	print_fields_arm(cp15.c7_par, %u);
-	print_fields_arm(cp15.c9_insn, %u);
-	print_fields_arm(cp15.c9_data, %u);
-	print_fields_arm(cp15.c9_pmcr, %u);
-	print_fields_arm(cp15.c9_pmcnten, %u);
-	print_fields_arm(cp15.c9_pmovsr, %u);
-	print_fields_arm(cp15.c9_pmxevtyper, %u);
-	print_fields_arm(cp15.c9_pmuserenr, %u);
-	print_fields_arm(cp15.c9_pminten, %u);
-	print_fields_arm(cp15.c12_vbar, %u);
-	print_fields_arm(cp15.c12_mvbar, %u);
-	print_fields_arm(cp15.c13_fcse, %u);
-	print_fields_arm(cp15.c13_context, %u);
-	print_fields_arm(cp15.c13_tls1, %u);
-	print_fields_arm(cp15.c13_tls2, %u);
-	print_fields_arm(cp15.c13_tls3, %u);
-	print_fields_arm(cp15.c15_cpar, %u);
-	print_fields_arm(cp15.c15_ticonfig, %u);
-	print_fields_arm(cp15.c15_i_max, %u);
-	print_fields_arm(cp15.c15_i_min, %u);
-	print_fields_arm(cp15.c15_threadid, %u);
-	print_fields_arm(v7m.other_sp, %u);
-	print_fields_arm(v7m.vecbase, %u);
-	print_fields_arm(v7m.basepri, %u);
-	print_fields_arm(v7m.control, %u);
-	print_fields_arm(v7m.current_sp, %u);
-	print_fields_arm(v7m.exception, %d);
-	print_fields_arm(v7m.pending_exception, %d);
-	print_fields_arm(teecr, %u);
-	print_fields_arm(teehbr, %u);
-	print_fields_arm(features, %u);
-	print_fields_arm(vfp.vec_len, %d);
-	print_fields_arm(vfp.vec_stride, %d);
-	for(i = 0; i <  32 ; i++)
-	{
-//		sprintf(dest, "r%d = %lf ",i, my_env->vfp.regs[i]);
-		if(my_env->vfp.regs[i] != myPrevState->vfp.regs[i])
-		{
-			printf("r%d = %2.4lf ",i, my_env->vfp.regs[i]);
-			myPrevState->vfp.regs[i] = my_env->vfp.regs[i];
-		}
-	}
-	for(i = 0; i <  16 ; i++)
-	{
-//		sprintf(dest, "xr%d = %6.4lf ",i, my_env->vfp.xregs[i]);
-		if(my_env->vfp.xregs[i] != myPrevState->vfp.xregs[i])
-		{
-			printf("xr%d = %2.4lf ",i, my_env->vfp.xregs[i]);
-			myPrevState->vfp.xregs[i] = my_env->vfp.xregs[i];
-		}
-	}
-	for(i = 0; i <  8 ; i++)
-	{
-		sprintf(dest, "scratch%d = %x ",i, my_env->vfp.scratch[i]);
-		if(my_env->vfp.scratch[i] != myPrevState->vfp.scratch[i])
-		{
-			printf("scratch%d = %x ",i, my_env->vfp.scratch[i]);
-			myPrevState->vfp.scratch[i] = my_env->vfp.scratch[i];
-		}
-	}
-	printFloatStatus(env, my_index, dest);
-	print_fields_arm(iwmmxt.val, %lu);
-	for(i = 0; i <  16 ; i++)
-	{
-		if(my_env->iwmmxt.cregs[i] != myPrevState->iwmmxt.cregs[i])
-		{
-			printf("iwmmxt.cregs[%d] = %lu ",i, my_env->iwmmxt.cregs[i]);
-			myPrevState->iwmmxt.cregs[i] = my_env->iwmmxt.cregs[i];
-		}
-		if(my_env->iwmmxt.regs[i] != myPrevState->iwmmxt.regs[i])
-		{
-			printf("iwmmxt.regs[%d] = %lu ",i, my_env->iwmmxt.regs[i]);
-			myPrevState->iwmmxt.regs[i] = my_env->iwmmxt.regs[i];
-		}
-	}
-	//printf("%s\n", dest);
-	if(strlen(dest) > 3000)
-	{
-		printf("make it 4?\n");
-		exit(0);
-	}
-#else
-	assert(false);
-#endif
-}
-inline int getMePCVal(CPUArchState *env)
-{
-
-#ifdef TARGET_ARM
-	if(env == NULL)
-	{
-		env = cpu_single_env;
-	}
-	int current = ((CPUARMState *)env)->regs[15];
-    return current; 
-#else
-	printf("pc val get is not implemented for other archs!\n");
-	assert(false);
-	return  -1;
-#endif
-}
-
-inline int getMeContextIdNoArgsDEPRECATED()//context is not same at caller and callee
-{
-#ifdef TARGET_ARM
-	CPUArchState* env = cpu_single_env;
-	if(!env)
-	{
-		printf("env is null!\n");
-		exit(0);
-	}
-	int current = ((CPUARMState *)env)->cp15.c13_context;
-    return current; 
-#else
-	printf("context id get is not implemented for other archs!\n");
-	assert(false);
-	return  -1;
-#endif
-}
-inline int getMeContextId(CPUArchState *env)
-{
-
-#ifdef TARGET_ARM
-	if(env == NULL)
-	{
-		printf("env is null!\n");
-		exit(0);
-		env = cpu_single_env;
-	}
-	if(!env)
-	{
-		printf("env is null!\n");
-		exit(0);
-	}
-	int current = ((CPUARMState *)env)->cp15.c13_context;
-	/*
-	int current = ((CPUARMState *)env)->cp15.c15_threadid;
-	if(current == 0)
-	{
-		current = ((CPUARMState *)env)->cp15.c13_context;
-		//if(needed_tid_length > 0)
-		//{
-		//	printf("current=%d\n", current);
-		//}
-	}
-	//else
-	{
-	none of these things work.. except context.
-		static int removeAfterDebug = -1;
-		if(removeAfterDebug != current)
-		{
-			removeAfterDebug = current;
-			printf("threadid=%d, context=%d fcse=%d\n",  ((CPUARMState *)env)->cp15.c15_threadid, ((CPUARMState *)env)->cp15.c13_context,  ((CPUARMState *)env)->cp15.c13_fcse);
-		}
-	}
-	*/
-	//int current = 0;
-	//while(current1)
-	//{
-	//	current <<= 4;
-	//	current |= (current1 & 0xff);
-	//	current1 >>= 4;
-	//}
-//	current >>= 8;
-	//if(needed_pid != -1)
-	//{
-	////	printf("current = %d needed = %d, in disas figuring current out\n",current, needed_pid);
-	//}
-	//if(needed_pid > 0 && needed_pid == current)
-	//{
-	//	printf("getting in context id returner..\n");
-	//}
-    return current; 
-#else
-	printf("context id get is not implemented for other archs!\n");
-	assert(false);
-	return  -1;
-#endif
-}
-int indexPidTid(int tid)
-{
-	//return 1;
-	//printf("coming here so often? %d\n", needed_tid_length);
-	int context = tid; 
-	if(needed_pid == context) 
-	{
-		return 0;
-	}
-	int i = 0;
-	if(needed_tid_length > 0)
-	{
-		//printf("%d", context);
-		for(i = 0; i < needed_tid_length; i++)
-		{
-		//	printf(" == %d? ", needed_tids[i]);
-			if(context == needed_tids[i])return i;
-		}
-		//printf("\n");
-	}
-	return -1;
-}
-void addPrintTid(CPUArchState *env, int val)
-{
-	if(env == NULL)
-	{
-		if(current_cpu)
-		{
-			env = cpu_single_env;
-		}
-	}
-	if(env == NULL)
-	{
-		return ;
-	}
-	int context = getMeContextId(env);
-	//return 1;
-	//printf("coming here so often? %d\n", needed_tid_length);
-	if(needed_pid == context) 
-	{
-	//	printf("need: %d = %d times\n", needed_pid, tidCounter[context]);
-		if(val > 0 && print_tids[0] & val > 0)
-		{
-			printf("disas 958th line %d",1/0);
-		}
-		print_tids[0]+=val;
-		return;
-	}
-	int i = 0;
-	if(needed_tid_length > 0)
-	{
-		//printf("%d", context);
-		for(i = 0; i < needed_tid_length; i++)
-		{
-			//printf("%d == %d? ", context, needed_tids[i]);
-	//		if(tidCounter[needed_tids[i]] > 0)
-	//		{
-	//			printf("needed: %d = %d times\n", needed_tids[i], tidCounter[context]);
-	//		}
-			if(context == needed_tids[i])
-			{
-				//swap to 0th location for speed [splaying :P]
-				int temp = needed_tids[0];
-				needed_tids[0] = context;
-				needed_tids[i] = temp;
-				needed_pid = context;
-				if(needed_pid == 0)
-				{
-					printf("URYU: here? len=%d context=%d i=%d temp=%d\n", needed_tid_length, context,i, needed_tids[i], temp);
-					exit(0);
-				}
-				temp = print_tids[0];
-				print_tids[0]=print_tids[i];
-				print_tids[i] = temp;
-				if(val > 0 && print_tids[0] & val > 0)
-				{
-					printf("%d",1/0);
-				}
-				print_tids[0]+=val;
-				return;
-				//ORIG: return i+1;
-			}
-		}
-		//printf("\n");
-	}
-	return;
-}
-void insertIntoAllPids(int one, int two)
-{
-	int oneF = 0, twoF = 0, i = 0;
-	for(i = 0; i < allPidsLength; i++)
-	{
-		oneF |= (one == allPidsChecked[i]);
-		twoF |= (two == allPidsChecked[i]);
-		if(oneF)
-		{
-			int t = allPidsChecked[i];
-			allPidsChecked[i] = allPidsChecked[0];
-			allPidsChecked[0] = t;
-			if(twoF)
-			{
-				return;
-			}
-		}
-	}
-	if(!oneF)
-	{
-		//printf("checking matchmaking for %d at %d\n", one, allPidsLength);
-			int t = allPidsChecked[0];
-			allPidsChecked[0] = one;
-			allPidsChecked[allPidsLength] = t;
-		allPidsLength ++;
-	}
-	if(one != two && twoF)
-	{
-		allPidsChecked[allPidsLength] = two;
-		//printf("checking matchmaking for %d at %d\n", two, allPidsLength);
-		allPidsLength ++;
-	}
-}
-int matchMeInPidTid(CPUArchState *env)
-{
-	//return CPU_tracer;
-	if(!CPU_tracer)
-	{
-		return 0;
-	}
-	if(env == NULL)
-	{
-		printf("env null in matchme is happening?\n");
-		exit(0);
-		if(current_cpu)
-		{
-			env = cpu_single_env;
-		}
-	}
-	//if(env == NULL)
-	//{
-	//	//printf("returning 0.. null\n");
-	//	return 0;
-	//}
-	int context = getMeContextId(env);
-	int context1 = getMeContextId(cpu_single_env);
-	insertIntoAllPids(context, context1);
-	if(needed_pid == 0)
-	{
-		printf("this is happening?\n");
-		exit(0);
-	}
-	//return 1;
-	//printf("coming here so often? %d\n", needed_tid_length);
-	if(needed_pid == context || context1 == needed_pid) 
-	{
-		//printf("need: %d = %d times\n", needed_pid, context);
-		
-		//to use who called infos if(print_tids[0] == 0)
-		//to use who called infos {
-		//to use who called infos 	return 1;
-		//to use who called infos }
-		//to use who called infos else return print_tids[0];
-		//printf("needed = %d, context = %d\n", needed_pid, context);
-		arm_helper_tid_now = context;
-		return 1;
-	}
-	int i = 0;
-	if(needed_tid_length > 0)
-	{
-		//printf("%d", context);
-		for(i = 0; i < needed_tid_length; i++)
-		{
-			//printf("%d == %d? ", context, needed_tids[i]);
-	//		if(tidCounter[needed_tids[i]] > 0)
-	//		{
-	//			printf("needed: %d = %d times\n", needed_tids[i], tidCounter[context]);
-	//		}
-			if(context == needed_tids[i] || needed_tids[i] == context1)
-			{
-				//swap to 0th location for speed [splaying :P]
-				int temp = needed_tids[0];
-				needed_tids[0]=context;
-				needed_tids[i] = temp;
-				needed_pid = context;
-				if(needed_pid == 0)
-				{
-					printf("HOLLOW: matching here? len=%d context=%d\n", needed_tid_length, context);
-					exit(0);
-				}
-				temp = print_tids[0];
-				print_tids[0]=print_tids[i];
-				print_tids[i] = temp;
-				//to use who called infos if(print_tids[0] == 0)
-				//to use who called infos {
-				//to use who called infos 	return 1;
-				//to use who called infos }
-				//to use who called infos return print_tids[0];
-				//printf("needed = %d, context = %d at the right place %d\n", needed_pid, context, i+1);
-				arm_helper_tid_now = context;
-				return i+1;
-			}
-		}
-		//printf("\n");
-	}
-	//printf("returning 0..\n");
-	return 0;
-}
-int matchMeInPidTidNoArgsDEPRECATED()//context is not same at caller and callee
-{
-	return matchMeInPidTid(NULL);
-}
-typedef struct hash_member{
-	target_ulong pc, size;
-}hash_member;
-typedef struct hashset{
-	hash_member *printed_blocks;
-	int count, max;
-} hashset;
-static hashset *my_hashset = NULL;
-static int foundInHashset(target_ulong pc, target_ulong size)
-{
-	int i = 0;
-	for(i = 0; i < my_hashset->count; i++)
-	{
-		if(my_hashset->printed_blocks[i].pc == pc && my_hashset->printed_blocks[i].size == size)
-		{
-			return i;
-		}
-	}
-	return 0;
-}
-static int alreadyPrinted(target_ulong pc, target_ulong size)
-{
-	//REMOVE REMOVE REMOVE
-	//return 1;
-	if(my_hashset == NULL)
-	{
-		my_hashset = (hashset*)malloc(sizeof(hashset));
-		my_hashset->printed_blocks = (hash_member *)malloc(sizeof(hash_member)*100);
-		my_hashset->max = 100;
-		my_hashset->count = 0;
-		my_hashset->printed_blocks[my_hashset->count].pc = pc;
-		my_hashset->printed_blocks[my_hashset->count].size = size;
-		my_hashset->count++;
-		return 0;
-	}
-	int i = 0;
-	for(i = 0; i < my_hashset->count; i++)
-	{
-		if(my_hashset->printed_blocks[i].pc == pc && my_hashset->printed_blocks[i].size == size)
-		{
-			return i+1;
-		}
-	}
-	//if(foundInHashset(pc, size))return 1;
-	if(my_hashset->count < my_hashset->max)
-	{
-		my_hashset->printed_blocks[my_hashset->count].pc = pc;
-		my_hashset->printed_blocks[my_hashset->count].size = size;
-		my_hashset->count++;
-	}
-	else
-	{
-		hash_member *new_alloc = realloc(my_hashset->printed_blocks, sizeof(hash_member)*(my_hashset->max+100));
-		if(!new_alloc)
-		{
-			printf("hashset is a memory overhead.. allocated %d bytes OR %d basic blocks: use/implement tb_fast to do this..\n", sizeof(hash_member)*my_hashset->max, my_hashset->max);
-			exit(0);
-		}
-		else
-		{
-			my_hashset->printed_blocks = new_alloc;
-			my_hashset->max = my_hashset->max+100;
-			my_hashset->printed_blocks[my_hashset->count].pc = pc;
-			my_hashset->printed_blocks[my_hashset->count].size = size;
-			my_hashset->count++;
-		}
-	}
-	return 0;
-}
 /* Get LENGTH bytes from info's buffer, at target address memaddr.
    Transfer them to myaddr.  */
 int
@@ -652,14 +43,10 @@ target_read_memory (bfd_vma memaddr,
                     bfd_byte *myaddr,
                     int length,
                     struct disassemble_info *info)
-
 {
     CPUDebug *s = container_of(info, CPUDebug, info);
 
-    cpu_memory_rw_debug(ENV_GET_CPU(s->env), memaddr, myaddr, length, 0, /*pras*/MEM_REQ_DISAS);
-//this prints all opcodes in disas	static uint32_t count = 0x0;
-//this prints all opcodes in disas	count++;
-//this prints all opcodes in disas	memcpy(myaddr, &count, length); 
+    cpu_memory_rw_debug(ENV_GET_CPU(s->env), memaddr, myaddr, length, 0);
     return 0;
 }
 
@@ -815,13 +202,9 @@ static int print_insn_od_target(bfd_vma pc, disassemble_info *info)
     other targets - unused
  */
 void target_disas(FILE *out, CPUArchState *env, target_ulong code,
-                  target_ulong size, int flags)//, int pid_matched_gemdroid)
+                  target_ulong size, int flags)
 {
     target_ulong pc;
-	//Gemdroid added
-	if(out == 0)
-		out = stdout;
-	//Gemdroid end
     int count;
     CPUDebug s;
     int (*print_insn)(bfd_vma pc, disassemble_info *info) = NULL;
@@ -920,39 +303,16 @@ void target_disas(FILE *out, CPUArchState *env, target_ulong code,
     if (print_insn == NULL) {
         print_insn = print_insn_od_target;
     }
-	//static int prev_tid = -1;
-	//if(prev_tid != getMeContextId(env) && CPU_tracer)
-	//{
-	//	prev_tid = getMeContextId(env);
-	//	printf("cpu-trcer = %d, matched=%d, current=%d\n", CPU_tracer, matchMeInPidTid(env), getMeContextId(env));
-	//}
-	// this not getting called for some reason!
-	//REMOVE REMOVE REMOVE
-		//if(CPU_tracer)/// &&  matchMeInPidTid(env))//current_pid == needed_pid && needed_pid > 0)
-		if(CPU_tracer &&  matchMeInPidTid(env))//current_pid == needed_pid && needed_pid > 0)
-		{
-	//REMOVE REMOVE REMOVE
-			printRegisters(env, "before entering:");
-			if(!alreadyPrinted(code,  size))
-			{
 
     for (pc = code; size > 0; pc += count, size -= count) {
-					fprintf(out, "%d %x ",getMeContextId(env),  pc);
-					//	fprintf(out, "0x" TARGET_FMT_lx " ", pc);
-					//GemDroid End.
-					//fprintf(out, "0x" TARGET_FMT_lx ":  ", pc);
-					//pras comments: addPrintTid(env, +64);
-					uint64_t deb = 0;
-				//	for(deb = 0x0; deb < 0xfffffffful;deb++)
-				//	{
-				//		fprintf(out, "%d %x ",getMeContextId(env),  pc);
-						count = print_insn(pc, &s.info);
-			//			fprintf(out, "\n");
-			//		}
-			//		exit(0);
-					//pras comments: addPrintTid(env, -64);
-	//////////fprintf(out, "0x" TARGET_FMT_lx ":  ", pc);
-	//////////////count = print_insn(pc, &s.info);
+
+         //GemDroid Added - Check if the following line needs to be commented?
+         //fprintf(out, "%d ", current_pid);
+         //fprintf(out, "0x" TARGET_FMT_lx " ", pc);
+         //GemDroid End.
+
+	//fprintf(out, "0x" TARGET_FMT_lx ":  ", pc);
+	count = print_insn(pc, &s.info);
 #if 0
         {
             int i;
@@ -976,26 +336,11 @@ void target_disas(FILE *out, CPUArchState *env, target_ulong code,
             break;
         }
     }
-	fprintf(out, "***end***\n");
-			}
-			else
-			{
-
-				//REMOVE REMOVE REMOVE
-				fprintf(out, "%d, Lookup: %x %d\n",getMeContextId(env),  code, size);
-			}
-		}
-		//pras adds this new
-	fflush(out);
 }
 
 /* Disassemble this for me please... (debugging). */
 void disas(FILE *out, void *code, unsigned long size)
 {
-	//Gemdroid added
-	if(out == 0)
-		out = stdout;
-	//Gemdroid end
     uintptr_t pc;
     int count;
     CPUDebug s;
@@ -1085,10 +430,9 @@ monitor_read_memory (bfd_vma memaddr, bfd_byte *myaddr, int length,
     CPUDebug *s = container_of(info, CPUDebug, info);
 
     if (monitor_disas_is_physical) {
-		int printData = matchMeInPidTid(s->env);
         cpu_physical_memory_read(memaddr, myaddr, length);
     } else {
-        cpu_memory_rw_debug(ENV_GET_CPU(s->env), memaddr,myaddr, length, 0, /*pras*/MEM_REQ_DISAS);
+        cpu_memory_rw_debug(ENV_GET_CPU(s->env), memaddr,myaddr, length, 0);
     }
     return 0;
 }

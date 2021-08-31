@@ -23,8 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <stdio.h>
-
 #ifdef _WIN32
 #undef ERROR
 #endif
@@ -48,8 +46,6 @@ struct Frame {
             width(w), height(h), pixels(NULL) {
         this->pixels = ::calloc(w * 4, h);
         ::memcpy(this->pixels, pixels, w * 4 * h);
-		//pras
-		printf("frame:pixels: w=%d,d=%d\n",w,h);
     }
 
     ~Frame() {

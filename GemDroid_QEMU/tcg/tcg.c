@@ -337,16 +337,15 @@ void tcg_prologue_init(TCGContext *s)
     tcg_target_qemu_prologue(s);
     flush_icache_range((uintptr_t)s->code_buf, (uintptr_t)s->code_ptr);
 
-//pras comments this: #ifdef DEBUG_DISAS
-    //orig: if (qemu_loglevel_mask(CPU_LOG_TB_OUT_ASM)) {
-    if (qemu_loglevel_mask(CPU_LOG_TB_OUT_ASM) || CPU_tracer) {
+#ifdef DEBUG_DISAS
+    if (qemu_loglevel_mask(CPU_LOG_TB_OUT_ASM)) {
         size_t size = s->code_ptr - s->code_buf;
         qemu_log("PROLOGUE: [size=%zu]\n", size);
         log_disas(s->code_buf, size);
         qemu_log("\n");
         qemu_log_flush();
     }
-//pras comments this: #endif
+#endif
 }
 
 void tcg_set_frame(TCGContext *s, int reg, intptr_t start, intptr_t size)
@@ -1104,8 +1103,6 @@ void tcg_dump_ops(TCGContext *s)
     opc_ptr = s->gen_opc_buf;
     args = s->gen_opparam_buf;
     while (opc_ptr < s->gen_opc_ptr) {
-		//pras adds this debug reason:
-		// printf("## prints a lot of 0s: %d %x \n", s->print_data_flag, s->print_data_pc);
         c = *opc_ptr++;
         def = &tcg_op_defs[c];
         if (c == INDEX_op_debug_insn_start) {
@@ -2463,14 +2460,13 @@ static inline int tcg_gen_code_common(TCGContext *s, uint8_t *gen_code_buf,
     const TCGOpDef *def;
     const TCGArg *args;
 
-//pras: comments this: #ifdef DEBUG_DISAS
-    //orig: if (unlikely(qemu_loglevel_mask(CPU_LOG_TB_OP))) {
-    if (unlikely(qemu_loglevel_mask(CPU_LOG_TB_OP)) || CPU_tracer) {
+#ifdef DEBUG_DISAS
+    if (unlikely(qemu_loglevel_mask(CPU_LOG_TB_OP))) {
         qemu_log("OP:\n");
         tcg_dump_ops(s);
         qemu_log("\n");
     }
-//pras comments this: #endif
+#endif
 
 #ifdef CONFIG_PROFILER
     s->opt_time -= profile_getclock();
@@ -2492,14 +2488,13 @@ static inline int tcg_gen_code_common(TCGContext *s, uint8_t *gen_code_buf,
     s->la_time += profile_getclock();
 #endif
 
-//pras comments this: #ifdef DEBUG_DISAS
-    //orig: if (unlikely(qemu_loglevel_mask(CPU_LOG_TB_OP_OPT))) {
-    if (unlikely(qemu_loglevel_mask(CPU_LOG_TB_OP_OPT)) || CPU_tracer) {
+#ifdef DEBUG_DISAS
+    if (unlikely(qemu_loglevel_mask(CPU_LOG_TB_OP_OPT))) {
         qemu_log("OP after optimization and liveness analysis:\n");
         tcg_dump_ops(s);
         qemu_log("\n");
     }
-//pras comments this: #endif
+#endif
 
     tcg_reg_alloc_start(s);
 

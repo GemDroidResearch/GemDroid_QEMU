@@ -12,7 +12,6 @@
 #include "android/framebuffer.h"
 #include <memory.h>
 #include <stdlib.h>
-#include<stdio.h>
 
 typedef struct {
     /* client fields, these correspond to code that waits for updates before displaying them */
@@ -35,8 +34,6 @@ static int
 _get_pitch( int  width, QFrameBufferFormat  format )
 {
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     switch (format) {
         case QFRAME_BUFFER_RGB565:
             return width*2;
@@ -51,8 +48,6 @@ static int
 _get_bits_per_pixel(QFrameBufferFormat  format)
 {
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     switch (format) {
         case QFRAME_BUFFER_RGB565:
             return 16;
@@ -67,8 +62,6 @@ static int
 _get_bytes_per_pixel(QFrameBufferFormat  format)
 {
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     switch (format) {
         case QFRAME_BUFFER_RGB565:
             return 2;
@@ -90,8 +83,6 @@ qframebuffer_init( QFrameBuffer*       qfbuff,
 
     rotation &= 3;
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     if (!qfbuff || width < 0 || height < 0)
         return -1;
 
@@ -141,8 +132,6 @@ qframebuffer_set_dpi( QFrameBuffer*   qfbuff,
     ** mm / 25.4 = dots / dpi
     ** mm = (dots * 25.4)/dpi
     */
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     qfbuff->phys_width_mm  = (int)(0.5 + 25.4 * qfbuff->width  / x_dpi);
     qfbuff->phys_height_mm = (int)(0.5 + 25.4 * qfbuff->height / y_dpi);
 }
@@ -154,8 +143,6 @@ qframebuffer_set_mm( QFrameBuffer*   qfbuff,
                      int             width_mm,
                      int             height_mm )
 {
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     qfbuff->phys_width_mm  = width_mm;
     qfbuff->phys_height_mm = height_mm;
 }
@@ -167,8 +154,6 @@ qframebuffer_update( QFrameBuffer*  qfbuff, int  x, int  y, int  w, int  h )
 
     if (extra->fb_update)
         extra->fb_update( extra->fb_opaque, x, y, w, h );
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 
@@ -187,8 +172,6 @@ qframebuffer_add_client( QFrameBuffer*           qfbuff,
     extra->fb_rotate = fb_rotate;
     extra->fb_poll   = fb_poll;
     extra->fb_done   = fb_done;
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 void
@@ -204,8 +187,6 @@ qframebuffer_set_producer( QFrameBuffer*                qfbuff,
     extra->pr_check      = pr_check;
     extra->pr_invalidate = pr_invalidate;
     extra->pr_detach     = pr_detach;
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 
@@ -229,8 +210,6 @@ qframebuffer_rotate( QFrameBuffer*  qfbuff, int  rotation )
 
     if (extra->fb_rotate)
         extra->fb_rotate( extra->fb_opaque, rotation );
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 void
@@ -240,8 +219,6 @@ qframebuffer_poll( QFrameBuffer* qfbuff )
 
     if (extra && extra->fb_poll)
         extra->fb_poll( extra->fb_opaque );
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 
@@ -261,8 +238,6 @@ qframebuffer_done( QFrameBuffer*   qfbuff )
     free( qfbuff->pixels );
     free( qfbuff->extra );
     memset( qfbuff, 0, sizeof(*qfbuff) );
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 
@@ -279,8 +254,6 @@ qframebuffer_fifo_add( QFrameBuffer*  qfbuff )
         return;
 
     framebuffer_fifo[ framebuffer_fifo_count++ ] = qfbuff;
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 
@@ -290,8 +263,6 @@ qframebuffer_fifo_get( void )
     if (framebuffer_fifo_rpos >= framebuffer_fifo_count)
         return NULL;
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return framebuffer_fifo[ framebuffer_fifo_rpos++ ];
 }
 
@@ -307,8 +278,6 @@ qframebuffer_check_updates( void )
         if (extra->pr_check)
             extra->pr_check( extra->pr_opaque );
     }
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 void
@@ -318,8 +287,6 @@ qframebuffer_pulse( void )
     for (nn = 0; nn < framebuffer_fifo_count; nn++) {
         qframebuffer_poll(framebuffer_fifo[nn]);
     }
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 void
@@ -333,6 +300,4 @@ qframebuffer_invalidate_all( void )
         if (extra->pr_invalidate)
             extra->pr_invalidate( extra->pr_opaque );
     }
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }

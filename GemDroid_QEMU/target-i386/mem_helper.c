@@ -44,13 +44,13 @@ void helper_cmpxchg8b(CPUX86State *env, target_ulong a0)
     int eflags;
 
     eflags = helper_cc_compute_all(env, CC_OP);
-    d = cpu_ldq_data(env, a0, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED);
+    d = cpu_ldq_data(env, a0);
     if (d == (((uint64_t)EDX << 32) | (uint32_t)EAX)) {
-        cpu_stq_data(env, a0, ((uint64_t)ECX << 32) | (uint32_t)EBX, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED);
+        cpu_stq_data(env, a0, ((uint64_t)ECX << 32) | (uint32_t)EBX);
         eflags |= CC_Z;
     } else {
         /* always do the store */
-        cpu_stq_data(env, a0, d, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED);
+        cpu_stq_data(env, a0, d);
         EDX = (uint32_t)(d >> 32);
         EAX = (uint32_t)d;
         eflags &= ~CC_Z;
@@ -67,16 +67,16 @@ void helper_cmpxchg16b(CPUX86State *env, target_ulong a0)
     if ((a0 & 0xf) != 0)
         raise_exception(env, EXCP0D_GPF);
     eflags = helper_cc_compute_all(env, CC_OP);
-    d0 = cpu_ldq_data(env, a0, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED);
-    d1 = cpu_ldq_data(env, a0 + 8, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED);
+    d0 = cpu_ldq_data(env, a0);
+    d1 = cpu_ldq_data(env, a0 + 8);
     if (d0 == EAX && d1 == EDX) {
-        cpu_stq_data(env, a0, EBX, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED);
-        cpu_stq_data(env, a0 + 8, ECX, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED);
+        cpu_stq_data(env, a0, EBX);
+        cpu_stq_data(env, a0 + 8, ECX);
         eflags |= CC_Z;
     } else {
         /* always do the store */
-        cpu_stq_data(env, a0, d0, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED);
-        cpu_stq_data(env, a0 + 8, d1, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED);
+        cpu_stq_data(env, a0, d0);
+        cpu_stq_data(env, a0 + 8, d1);
         EDX = d1;
         EAX = d0;
         eflags &= ~CC_Z;
@@ -88,8 +88,8 @@ void helper_cmpxchg16b(CPUX86State *env, target_ulong a0)
 void helper_boundw(CPUX86State *env, target_ulong a0, int v)
 {
     int low, high;
-    low = cpu_ldsw_data(env, a0, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED);
-    high = cpu_ldsw_data(env, a0 + 2, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED);
+    low = cpu_ldsw_data(env, a0);
+    high = cpu_ldsw_data(env, a0 + 2);
     v = (int16_t)v;
     if (v < low || v > high) {
         raise_exception(env, EXCP05_BOUND);
@@ -99,8 +99,8 @@ void helper_boundw(CPUX86State *env, target_ulong a0, int v)
 void helper_boundl(CPUX86State *env, target_ulong a0, int v)
 {
     int low, high;
-    low = cpu_ldl_data(env, a0, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED);
-    high = cpu_ldl_data(env, a0 + 4, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED);
+    low = cpu_ldl_data(env, a0);
+    high = cpu_ldl_data(env, a0 + 4);
     if (v < low || v > high) {
         raise_exception(env, EXCP05_BOUND);
     }

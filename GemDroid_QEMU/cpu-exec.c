@@ -24,6 +24,11 @@
 #include "exec/hax.h"
 #include "qemu/atomic.h"
 
+//GemDroid added
+//For GemDroid Tracer Functionality
+#include "gemdroid-tracer.h"
+//GemDroid end
+
 #if !defined(CONFIG_SOFTMMU)
 #undef EAX
 #undef ECX
@@ -103,29 +108,7 @@ static void cpu_exec_nocache(CPUArchState *env, int max_cycles, TranslationBlock
                      max_cycles);
     env->current_tb = tb;
     /* execute the generated code */
-	//pras adds this:
-	//if(tb->print_data_flag)
-	//{
-	//	if(getMeContextId(env) != tb->print_data_flag)
-	//	{
-	//		printf("assert failing?\n");
-	//	}
-	//	assert(getMeContextId(env) == tb->print_data_flag);
-	//}
-	tcg_ctx.print_data_flag = tb->print_data_flag;
-	tcg_ctx.print_data_pc = getMePCVal(env);
-	//pras added
-		if(matchMeInPidTid(env))
-		{
-			printf("from cpu-exec:120\n");
-		}
-	target_disas(0, env, tb->pc,
-			tb->size, tb->flags);//, matchMeInPidTid(env));//ARM_TBFLAG_THUMB(tb->flags));
-	//addPrintTid(env, 8);
-	//lastAccessedTemp = getMeContextId(env);
-	////////new code added above///////
     next_tb = tcg_qemu_tb_exec(env, tb->tc_ptr);
-	//lastAccessedTemp = getMeContextId(env);
     env->current_tb = NULL;
 
     if ((next_tb & 3) == 2) {
@@ -188,8 +171,6 @@ static TranslationBlock *tb_find_slow(CPUArchState *env,
     }
     /* we add the TB in the virtual pc hash table */
     env->tb_jmp_cache[tb_jmp_cache_hash_func(pc)] = tb;
-	//pras adds
-	tb->print_data_flag = getMeContextId(env);
     return tb;
 }
 
@@ -208,8 +189,13 @@ static inline TranslationBlock *tb_find_fast(CPUArchState *env)
                  tb->flags != flags)) {
         tb = tb_find_slow(env, pc, cs_base, flags);
     }
-	//pras adds
-	tb->print_data_flag = getMeContextId(env);
+
+    //GemDroid added
+    if(ICOUNT_tracer) {
+        env->cpu_inst_counter = env->cpu_inst_counter + tb->icount;
+    }    
+    //GemDroid end
+
     return tb;
 }
 
@@ -339,14 +325,10 @@ int cpu_exec(CPUOldState *env)
 
 #ifdef CONFIG_HAX
             if (hax_enabled() && !hax_vcpu_exec(cpu))
-			{
-				printf("pras: hax enabled!\n");
                 longjmp(env->jmp_env, 1);
-			}
 #endif
 
             if (kvm_enabled()) {
-				printf("pras: kvm enabled!\n");
                 kvm_cpu_exec(cpu);
                 longjmp(env->jmp_env, 1);
             }
@@ -569,9 +551,8 @@ int cpu_exec(CPUOldState *env)
                     env->exception_index = EXCP_INTERRUPT;
                     cpu_loop_exit(env);
                 }
-#if defined(DEBUG_DISAS) || defined(CONFIG_DEBUG_EXEC) //|| CPU_tracer
-                if (qemu_loglevel_mask(CPU_LOG_TB_CPU) /*pras*/|| CPU_tracer) {
-				//	printf("pras: log: enters here \n");
+#if defined(DEBUG_DISAS) || defined(CONFIG_DEBUG_EXEC)
+                if (qemu_loglevel_mask(CPU_LOG_TB_CPU)) {
                     /* restore flags in standard format */
 #if defined(TARGET_I386)
                     env->eflags = env->eflags | cpu_cc_compute_all(env, CC_OP)
@@ -591,22 +572,6 @@ int cpu_exec(CPUOldState *env)
 #endif /* DEBUG_DISAS || CONFIG_DEBUG_EXEC */
                 spin_lock(&tcg_ctx.tb_ctx.tb_lock);
                 tb = tb_find_fast(env);
-				///////////////////////////////////////////////////PRAS WORK ON THIS:::::
-					//pras added
-				  //static int tidPrinted = -1;
-				  //if(needed_tid_length > 0 && getMeContextId(env) != tidPrinted)
-				  //{
-				  //	printf("pras: tb find fast: cpu-exec matches? %d %d \n",getMeContextId(env), matchMeInPidTid(env));
-				  //	tidPrinted = getMeContextId(env);
-				  //}
-		if(matchMeInPidTid(env))
-		{
-			printf("from cpu-exec:604\n");
-		}
-					target_disas(0, env, tb->pc,
-							tb->size, tb->flags);//, matchMeInPidTid(env));//ARM_TBFLAG_THUMB(tb->flags));
-				
-				///////////////////////////////////////////////////PRAS WORK ON THIS:::::
                 /* Note: we do it here to avoid a gcc bug on Mac OS X when
                    doing it in tb_find_slow */
                 if (tcg_ctx.tb_ctx.tb_invalidated_flag) {
@@ -617,9 +582,6 @@ int cpu_exec(CPUOldState *env)
                     tcg_ctx.tb_ctx.tb_invalidated_flag = 0;
                 }
 #ifdef CONFIG_DEBUG_EXEC
-                printf("Trace 0x%08lx [" TARGET_FMT_lx "] %s\n",
-                             (long)tb->tc_ptr, tb->pc,
-                             lookup_symbol(tb->pc));
                 qemu_log_mask(CPU_LOG_EXEC, "Trace 0x%08lx [" TARGET_FMT_lx "] %s\n",
                              (long)tb->tc_ptr, tb->pc,
                              lookup_symbol(tb->pc));
@@ -640,26 +602,8 @@ int cpu_exec(CPUOldState *env)
                 barrier();
                 if (likely(!cpu->exit_request)) {
                     tc_ptr = tb->tc_ptr;
-					/////////////////////////pras start
-					tcg_ctx.print_data_flag = tb->print_data_flag;
-					tcg_ctx.print_data_pc = getMePCVal(env);
-					//pras added
-					//if(matchMeInPidTid(env))
-					//{
-					//	printf("tb qemu exec matches %d\n", getMeContextId(env));
-					//}
-		if(matchMeInPidTid(env))
-		{
-			printf("from cpu-exec:654\n");
-		}
-					target_disas(0, env, tb->pc,
-							tb->size, tb->flags);//, matchMeInPidTid(env));//ARM_TBFLAG_THUMB(tb->flags));
-					//lastAccessedTemp = getMeContextId(env);
                 /* execute the generated code */
                     next_tb = tcg_qemu_tb_exec(env, tc_ptr);
-					//lastAccessedTemp = getMeContextId(env);
-					////////////////////////pras end
-					//pras end
                     switch (next_tb & TB_EXIT_MASK) {
                     case TB_EXIT_REQUESTED:
                         /* Something asked us to stop executing
@@ -837,13 +781,6 @@ static inline int handle_cpu_signal(unsigned long pc, unsigned long address,
     /* now we have a real cpu fault */
     tb = tb_find_pc(pc);
     if (tb) {
-		//pras
-		if(matchMeInPidTid(env))
-		{
-			printf("from cpu-exec:843\n");
-		}
-		target_disas(0, env, tb->pc,
-				tb->size, tb->flags);//, matchMeInPidTid(env));//ARM_TBFLAG_THUMB(tb->flags));
         /* the PC is inside the translated code. It means that we have
            a virtual CPU fault */
         cpu_restore_state(env, pc);

@@ -26,8 +26,6 @@
 #define TCG_H
 
 #include "qemu-common.h"
-//pras
-#include "gemdroid-tracer.h"
 #include "qemu/bitops.h"
 #include "tcg-target.h"
 
@@ -530,11 +528,6 @@ struct TCGContext {
 
     TBContext tb_ctx;
 
-	//pras debug flags:
-	int print_data_flag;
-	uint32_t print_data_pc;
-	//pras end
-
     /* The TCGBackendData structure is private to tcg-target.c.  */
     struct TCGBackendData *be;
 };
@@ -784,46 +777,46 @@ void tcg_register_jit(void *buf, size_t buf_size);
 #ifdef CONFIG_SOFTMMU
 /* Value zero-extended to tcg register size.  */
 tcg_target_ulong helper_ret_ldub_mmu(CPUArchState *env, target_ulong addr,
-                                     int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req);
+                                     int mmu_idx, uintptr_t retaddr);
 tcg_target_ulong helper_le_lduw_mmu(CPUArchState *env, target_ulong addr,
-                                    int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req);
+                                    int mmu_idx, uintptr_t retaddr);
 tcg_target_ulong helper_le_ldul_mmu(CPUArchState *env, target_ulong addr,
-                                    int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req);
+                                    int mmu_idx, uintptr_t retaddr);
 uint64_t helper_le_ldq_mmu(CPUArchState *env, target_ulong addr,
-                           int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req);
+                           int mmu_idx, uintptr_t retaddr);
 tcg_target_ulong helper_be_lduw_mmu(CPUArchState *env, target_ulong addr,
-                                    int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req);
+                                    int mmu_idx, uintptr_t retaddr);
 tcg_target_ulong helper_be_ldul_mmu(CPUArchState *env, target_ulong addr,
-                                    int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req);
+                                    int mmu_idx, uintptr_t retaddr);
 uint64_t helper_be_ldq_mmu(CPUArchState *env, target_ulong addr,
-                           int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req);
+                           int mmu_idx, uintptr_t retaddr);
 
 /* Value sign-extended to tcg register size.  */
 tcg_target_ulong helper_ret_ldsb_mmu(CPUArchState *env, target_ulong addr,
-                                     int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req);
+                                     int mmu_idx, uintptr_t retaddr);
 tcg_target_ulong helper_le_ldsw_mmu(CPUArchState *env, target_ulong addr,
-                                    int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req);
+                                    int mmu_idx, uintptr_t retaddr);
 tcg_target_ulong helper_le_ldsl_mmu(CPUArchState *env, target_ulong addr,
-                                    int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req);
+                                    int mmu_idx, uintptr_t retaddr);
 tcg_target_ulong helper_be_ldsw_mmu(CPUArchState *env, target_ulong addr,
-                                    int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req);
+                                    int mmu_idx, uintptr_t retaddr);
 tcg_target_ulong helper_be_ldsl_mmu(CPUArchState *env, target_ulong addr,
-                                    int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req);
+                                    int mmu_idx, uintptr_t retaddr);
 
 void helper_ret_stb_mmu(CPUArchState *env, target_ulong addr, uint8_t val,
-                        int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req);
+                        int mmu_idx, uintptr_t retaddr);
 void helper_le_stw_mmu(CPUArchState *env, target_ulong addr, uint16_t val,
-                       int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req);
+                       int mmu_idx, uintptr_t retaddr);
 void helper_le_stl_mmu(CPUArchState *env, target_ulong addr, uint32_t val,
-                       int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req);
+                       int mmu_idx, uintptr_t retaddr);
 void helper_le_stq_mmu(CPUArchState *env, target_ulong addr, uint64_t val,
-                       int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req);
+                       int mmu_idx, uintptr_t retaddr);
 void helper_be_stw_mmu(CPUArchState *env, target_ulong addr, uint16_t val,
-                       int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req);
+                       int mmu_idx, uintptr_t retaddr);
 void helper_be_stl_mmu(CPUArchState *env, target_ulong addr, uint32_t val,
-                       int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req);
+                       int mmu_idx, uintptr_t retaddr);
 void helper_be_stq_mmu(CPUArchState *env, target_ulong addr, uint64_t val,
-                       int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req);
+                       int mmu_idx, uintptr_t retaddr);
 
 /* Temporary aliases until backends are converted.  */
 #ifdef TARGET_WORDS_BIGENDIAN
@@ -846,19 +839,19 @@ void helper_be_stq_mmu(CPUArchState *env, target_ulong addr, uint64_t val,
 # define helper_ret_stq_mmu   helper_le_stq_mmu
 #endif
 
-uint8_t helper_ldb_mmu(CPUArchState *env, target_ulong addr, int mmu_idx , /*pras*/MEM_REQ_ORIGIN mem_req);
-uint16_t helper_ldw_mmu(CPUArchState *env, target_ulong addr, int mmu_idx, /*pras*/MEM_REQ_ORIGIN mem_req);
-uint32_t helper_ldl_mmu(CPUArchState *env, target_ulong addr, int mmu_idx, /*pras*/MEM_REQ_ORIGIN mem_req);
-uint64_t helper_ldq_mmu(CPUArchState *env, target_ulong addr, int mmu_idx, /*pras*/MEM_REQ_ORIGIN mem_req);
+uint8_t helper_ldb_mmu(CPUArchState *env, target_ulong addr, int mmu_idx);
+uint16_t helper_ldw_mmu(CPUArchState *env, target_ulong addr, int mmu_idx);
+uint32_t helper_ldl_mmu(CPUArchState *env, target_ulong addr, int mmu_idx);
+uint64_t helper_ldq_mmu(CPUArchState *env, target_ulong addr, int mmu_idx);
 
 void helper_stb_mmu(CPUArchState *env, target_ulong addr,
-                    uint8_t val, int mmu_idx, /*pras*/MEM_REQ_ORIGIN mem_req);
+                    uint8_t val, int mmu_idx);
 void helper_stw_mmu(CPUArchState *env, target_ulong addr,
-                    uint16_t val, int mmu_idx, /*pras*/MEM_REQ_ORIGIN mem_req);
+                    uint16_t val, int mmu_idx);
 void helper_stl_mmu(CPUArchState *env, target_ulong addr,
-                    uint32_t val, int mmu_idx, /*pras*/MEM_REQ_ORIGIN mem_req);
+                    uint32_t val, int mmu_idx);
 void helper_stq_mmu(CPUArchState *env, target_ulong addr,
-                    uint64_t val, int mmu_idx, /*pras*/MEM_REQ_ORIGIN mem_req);
+                    uint64_t val, int mmu_idx);
 #endif /* CONFIG_SOFTMMU */
 
 #endif /* TCG_H */

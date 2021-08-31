@@ -34,6 +34,11 @@
 /* Needed early for HOST_BSD etc. */
 #include "config-host.h"
 
+/* Network DEBUG */
+//#define DEBUG_NET /* Sandy */
+//#define DEBUG_SLIRP /* Sandy */
+
+
 #ifndef _WIN32
 #include <sys/times.h>
 #include <sys/wait.h>

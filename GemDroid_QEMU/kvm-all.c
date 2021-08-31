@@ -543,25 +543,25 @@ static int kvm_handle_io(CPUState *cpu, uint16_t port, void *data,
         if (direction == KVM_EXIT_IO_IN) {
             switch (size) {
             case 1:
-                stb_p(ptr, cpu_inb(port), /*pras*/(matchMeInPidTid(cpu->env_ptr)?MEM_REQ_KVM:MEM_REQ_INVALID));
+                stb_p(ptr, cpu_inb(port));
                 break;
             case 2:
-                stw_p(ptr, cpu_inw(port), /*pras*/(matchMeInPidTid(cpu->env_ptr)?MEM_REQ_KVM:MEM_REQ_INVALID));
+                stw_p(ptr, cpu_inw(port));
                 break;
             case 4:
-                stl_p(ptr, cpu_inl(port), /*pras*/(matchMeInPidTid(cpu->env_ptr)?MEM_REQ_KVM:MEM_REQ_INVALID));
+                stl_p(ptr, cpu_inl(port));
                 break;
             }
         } else {
             switch (size) {
             case 1:
-                cpu_outb(port, ldub_p(ptr, /*pras*/(matchMeInPidTid(cpu->env_ptr)?MEM_REQ_KVM:MEM_REQ_INVALID)));
+                cpu_outb(port, ldub_p(ptr));
                 break;
             case 2:
-                cpu_outw(port, lduw_p(ptr, /*pras*/(matchMeInPidTid(cpu->env_ptr)?MEM_REQ_KVM:MEM_REQ_INVALID)));
+                cpu_outw(port, lduw_p(ptr));
                 break;
             case 4:
-                cpu_outl(port, ldl_p(ptr, /*pras*/(matchMeInPidTid(cpu->env_ptr)?MEM_REQ_KVM:MEM_REQ_INVALID)));
+                cpu_outl(port, ldl_p(ptr));
                 break;
             }
         }

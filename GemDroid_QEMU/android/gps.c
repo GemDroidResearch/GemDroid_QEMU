@@ -20,8 +20,6 @@ CharDriverState*   android_gps_cs;
 void
 android_gps_send_nmea( const char*  sentence )
 {
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     if (sentence == NULL)
         return;
 

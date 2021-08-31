@@ -108,16 +108,7 @@ void target_disas(FILE*, CPUArchState*, target_ulong, target_ulong, int);
 static inline void log_target_disas(CPUArchState *env, target_ulong start,
                                     target_ulong len, int flags)
 {
-	extern int matchMeInPidTid(CPUArchState *);
-	//pras
-	//if(matchMeInPidTidNoArgs())
-	{
-		if(matchMeInPidTid(env))
-		{
-			printf("from log.h:119\n");
-		}
-		target_disas(qemu_logfile, env, start, len, flags);
-	}
+    target_disas(qemu_logfile, env, start, len, flags);
 }
 
 void disas(FILE*, void*, unsigned long);

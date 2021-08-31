@@ -17,6 +17,12 @@
 #include "android/qemu-debug.h"
 #include "android/globals.h"
 
+//GemDroid added
+//For GemDroid Tracer Functionality
+#include "gemdroid-tracer.h"
+//GemDroid end
+
+
 #define  DEBUG  1
 
 #if DEBUG
@@ -172,12 +178,37 @@ goldfish_audio_buff_set_length( struct goldfish_audio_buff*  b, uint32_t  len )
 static void
 goldfish_audio_buff_read( struct goldfish_audio_buff*  b )
 {
+
+    //GemDroid added
+    //GemDroid added - Sound read from DRAM  to send to audio output
+    //printf("SND-IN: Write_to DRAM, add= [%"PRIu32"] length= [%"PRIu32"]\n",b->address,  b->    length);
+    if(IP_tracer)
+    {
+            printf("SND-IN-R: %x %"PRIu32"\n",b->address,  b->length); /* hexAddr, len(bytes)*/
+            cpu_inst_print_flag = true;
+    }
+    //GemDroid end
+
     cpu_physical_memory_read(b->address, b->data, b->length);
 }
 
 static void
 goldfish_audio_buff_write( struct goldfish_audio_buff*  b )
 {
+
+    //GemDroid added
+    //Sound read from DRAM  to send to audio output
+    //printf("SND-IN: Write_to DRAM, add= [%"PRIu32"] length= [%"PRIu32"]\n",b->address,  b->    length);
+    //GemDroid added - Sound being written by the Core to the memory.
+    //But, for the purpose of this experiment, all the DRAM writes will be captured by the ST    ORES coming from the CPU (software rendered).
+    //We record this as a "read" by the IP independently to render the sound.
+    if(IP_tracer)
+    {
+         printf("SND-OUT-W: %x %"PRIu32"\n",b->address,  b->length);/* hexAddr, len(bytes)*/
+         cpu_inst_print_flag = true;
+    }
+    //GemDroid end
+
     cpu_physical_memory_write(b->address, b->data, b->length);
 }
 

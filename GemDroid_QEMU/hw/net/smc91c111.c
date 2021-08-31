@@ -14,6 +14,10 @@
 /* For crc32 */
 #include <zlib.h>
 
+// /* debug SMC91C111 card */
+// #define DEBUG_SMC91C111 /* Sandy */
+
+
 /* Number of 2k memory pages available.  */
 #define NUM_PACKETS 4
 #define BUFFER_PER_PACKET 2048
@@ -165,6 +169,10 @@ static void smc91c111_update(smc91c111_state *s)
     if (s->tx_fifo_done_len != 0)
         s->int_level |= INT_TX;
     level = (s->int_level & s->int_mask) != 0;
+//#if defined(DEBUG_SMC91C111)  /* Sandy */
+//    printf("SMC91C111: Set IRQ to %d (%02x %02x)\n",
+//           isr ? 1 : 0, s->isr, s->imr);
+//#endif
     qemu_set_irq(s->irq, level);
 }
 
@@ -209,6 +217,10 @@ static void smc91c111_pop_rx_fifo(smc91c111_state *s)
         s->int_level &= ~INT_RCV;
     }
     smc91c111_update(s);
+#ifdef DEBUG_SMC91C111
+    printf("SMC91C111: read\n");
+#endif
+
 }
 
 /* Remove an item from the TX completion FIFO.  */
@@ -282,6 +294,9 @@ static void smc91c111_do_tx(smc91c111_state *s)
         else if (s->tx_fifo_done_len < NUM_PACKETS)
             s->tx_fifo_done[s->tx_fifo_done_len++] = packetnum;
         qemu_send_packet(s->vc, p, len);
+#if defined(DEBUG_SMC91C111) /* Sandy */
+    printf("SMC91C111: Using this qemu_send_packet\n");
+#endif
     }
     s->tx_fifo_len = 0;
     smc91c111_update(s);
@@ -685,6 +700,10 @@ static ssize_t smc91c111_receive(VLANClientState *vc, const uint8_t *buf, size_t
     int packetnum;
     uint8_t *p;
 
+#if defined(DEBUG_SMC91C111) /* Sandy */
+    printf("SMC91C111: received len before padding=%zd\n", size);
+#endif
+
     if ((s->rcr & RCR_RXEN) == 0 || (s->rcr & RCR_SOFT_RST))
         return -1;
     /* Short packets are padded with zeros.  Receiving a packet
@@ -750,6 +769,10 @@ static ssize_t smc91c111_receive(VLANClientState *vc, const uint8_t *buf, size_t
     /* TODO: Raise early RX interrupt?  */
     s->int_level |= INT_RCV;
     smc91c111_update(s);
+    
+#if defined(DEBUG_SMC91C111) /* Sandy */
+    printf("SMC91C111: received len after padding=%zd\n", size);
+#endif
 
     return size;
 }

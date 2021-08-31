@@ -70,8 +70,6 @@ const void* memmem(const void* haystack, size_t haystackLen,
 
 bool android_parseLinuxVersionString(const char* versionString,
                                      KernelVersion* kernelVersion) {
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     if (strncmp(versionString, kLinuxVersionStringPrefix,
             kLinuxVersionStringPrefixLen)) {
         KERNEL_ERROR << "unsupported kernel version string:" << versionString;
@@ -106,12 +104,8 @@ bool android_parseLinuxVersionString(const char* versionString,
 
 const char* android_kernelSerialDevicePrefix(KernelVersion kernelVersion) {
     if (kernelVersion >= KERNEL_VERSION_3_10_0) {
-		//pras
-		//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
         return "ttyGF";
     }
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return "ttyS";
 }
 
@@ -126,8 +120,6 @@ bool android_imageProbeKernelVersionString(const uint8_t* kernelFileData,
 
     const char kElfHeader[] = { 0x7f, 'E', 'L', 'F' };
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     if (kernelFileSize < sizeof(kElfHeader)) {
         KERNEL_ERROR << "Kernel image too short";
         return false;
@@ -206,8 +198,6 @@ bool android_pathProbeKernelVersionString(const char* kernelPath,
                                           char* dst/*[dstLen]*/,
                                           size_t dstLen) {
     FileData kernelFileData;
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     if (fileData_initFromFile(&kernelFileData, kernelPath) < 0) {
         KERNEL_ERROR << "Could not open kernel file!";
         return false;

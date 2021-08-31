@@ -13,9 +13,6 @@
 //#include "hw/loader.h"
 #endif
 
-//pras
-#include "gemdroid-tracer.h"
-
 static uint32_t cortexa9_cp15_c0_c1[8] =
 { 0x1031, 0x11, 0x000, 0, 0x00100103, 0x20000000, 0x01230000, 0x00002111 };
 
@@ -340,7 +337,7 @@ void cpu_reset(CPUState *cpu)
                modified flash and reset itself.  However images
                loaded via -kenrel have not been copied yet, so load the
                values directly from there.  */
-            env->regs[13] = ldl_p(rom); // not called pras
+            env->regs[13] = ldl_p(rom);
             pc = ldl_p(rom + 4);
             env->thumb = pc & 1;
             env->regs[15] = pc & ~1;
@@ -371,22 +368,22 @@ static int vfp_gdb_get_reg(CPUARMState *env, uint8_t *buf, int reg)
     /* VFP data registers are always little-endian.  */
     nregs = arm_feature(env, ARM_FEATURE_VFP3) ? 32 : 16;
     if (reg < nregs) {
-        stfq_le_p(buf, env->vfp.regs[reg], /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID));
+        stfq_le_p(buf, env->vfp.regs[reg]);
         return 8;
     }
     if (arm_feature(env, ARM_FEATURE_NEON)) {
         /* Aliases for Q regs.  */
         nregs += 16;
         if (reg < nregs) {
-            stfq_le_p(buf, env->vfp.regs[(reg - 32) * 2], /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID));
-            stfq_le_p(buf + 8, env->vfp.regs[(reg - 32) * 2 + 1], /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID));
+            stfq_le_p(buf, env->vfp.regs[(reg - 32) * 2]);
+            stfq_le_p(buf + 8, env->vfp.regs[(reg - 32) * 2 + 1]);
             return 16;
         }
     }
     switch (reg - nregs) {
-    case 0: stl_p(buf, env->vfp.xregs[ARM_VFP_FPSID], /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID)); return 4;
-    case 1: stl_p(buf, env->vfp.xregs[ARM_VFP_FPSCR], /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID)); return 4;
-    case 2: stl_p(buf, env->vfp.xregs[ARM_VFP_FPEXC], /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID)); return 4;
+    case 0: stl_p(buf, env->vfp.xregs[ARM_VFP_FPSID]); return 4;
+    case 1: stl_p(buf, env->vfp.xregs[ARM_VFP_FPSCR]); return 4;
+    case 2: stl_p(buf, env->vfp.xregs[ARM_VFP_FPEXC]); return 4;
     }
     return 0;
 }
@@ -397,27 +394,21 @@ static int vfp_gdb_set_reg(CPUARMState *env, uint8_t *buf, int reg)
 
     nregs = arm_feature(env, ARM_FEATURE_VFP3) ? 32 : 16;
     if (reg < nregs) {
-        env->vfp.regs[reg] = ldfq_le_p(buf, /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID));
+        env->vfp.regs[reg] = ldfq_le_p(buf);
         return 8;
     }
     if (arm_feature(env, ARM_FEATURE_NEON)) {
         nregs += 16;
         if (reg < nregs) {
-            env->vfp.regs[(reg - 32) * 2] = ldfq_le_p(buf, /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID));
-            env->vfp.regs[(reg - 32) * 2 + 1] = ldfq_le_p(buf + 8, /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID));
+            env->vfp.regs[(reg - 32) * 2] = ldfq_le_p(buf);
+            env->vfp.regs[(reg - 32) * 2 + 1] = ldfq_le_p(buf + 8);
             return 16;
         }
     }
-	//pras
-	//MEM_REQ_ORIGIN res = (matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID);
-	//if(res <= MEM_REQ_PRINTABLE)
-	//{
-	//	printf("pras: hows: env = %x, matchMeRes = %d, MEM_REQ_ARM_HELPER = %d, MEM_REQ_INVALID = %d\n", env, matchMeInPidTid(env), MEM_REQ_ARM_HELPER, MEM_REQ_INVALID); 
-	//}
     switch (reg - nregs) {
-    case 0: env->vfp.xregs[ARM_VFP_FPSID] = ldl_p(buf, /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID)); return 4;
-    case 1: env->vfp.xregs[ARM_VFP_FPSCR] = ldl_p(buf, /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID)); return 4;
-    case 2: env->vfp.xregs[ARM_VFP_FPEXC] = ldl_p(buf, /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID)) & (1 << 30); return 4;
+    case 0: env->vfp.xregs[ARM_VFP_FPSID] = ldl_p(buf); return 4;
+    case 1: env->vfp.xregs[ARM_VFP_FPSCR] = ldl_p(buf); return 4;
+    case 2: env->vfp.xregs[ARM_VFP_FPEXC] = ldl_p(buf) & (1 << 30); return 4;
     }
     return 0;
 }
@@ -832,7 +823,7 @@ static void do_interrupt_v7m(CPUARMState *env)
     case EXCP_BKPT:
         if (semihosting_enabled) {
             int nr;
-            nr = cpu_lduw_code(env, env->regs[15], /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID)) & 0xff;
+            nr = cpu_lduw_code(env, env->regs[15]) & 0xff;
             if (nr == 0xab) {
                 env->regs[15] += 2;
                 env->regs[0] = do_arm_semihosting(env);
@@ -901,17 +892,11 @@ void do_interrupt(CPUARMState *env)
         break;
     case EXCP_SWI:
         if (semihosting_enabled) {
-			//pras
-			//MEM_REQ_ORIGIN res = (matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID);
-			//if(res <= MEM_REQ_PRINTABLE)
-			//{
-			//	printf("pras: hows: env = %x, matchMeRes = %d, MEM_REQ_ARM_HELPER = %d, MEM_REQ_INVALID = %d\n", env, matchMeInPidTid(env), MEM_REQ_ARM_HELPER, MEM_REQ_INVALID); 
-			//}
             /* Check for semihosting interrupt.  */
             if (env->thumb) {
-                mask = cpu_lduw_code(env, env->regs[15] - 2, /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID)) & 0xff;
+                mask = cpu_lduw_code(env, env->regs[15] - 2) & 0xff;
             } else {
-                mask = cpu_ldl_code(env, env->regs[15] - 4, /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID)) & 0xffffff;
+                mask = cpu_ldl_code(env, env->regs[15] - 4) & 0xffffff;
             }
             /* Only intercept calls from privileged modes, to provide some
                semblance of security.  */
@@ -931,7 +916,7 @@ void do_interrupt(CPUARMState *env)
     case EXCP_BKPT:
         /* See if this is a semihosting syscall.  */
         if (env->thumb && semihosting_enabled) {
-            mask = cpu_lduw_code(env, env->regs[15], /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID)) & 0xff;
+            mask = cpu_lduw_code(env, env->regs[15]) & 0xff;
             if (mask == 0xab
                   && (env->uncached_cpsr & CPSR_M) != ARM_CPU_MODE_USR) {
                 env->regs[15] += 2;
@@ -1838,24 +1823,14 @@ void HELPER(set_cp15)(CPUARMState *env, uint32_t insn, uint32_t val)
                not modified virtual addresses, so this causes a TLB flush.
              */
             if (env->cp15.c13_fcse != val)
-			{
               tlb_flush(env, 1);
-			}
-			//printf("pras: helper switches tid0 to: %d\n", val);
             env->cp15.c13_fcse = val;
             break;
         case 1:
             /* This changes the ASID, so do a TLB flush.  */
             if (env->cp15.c13_context != val
                 && !arm_feature(env, ARM_FEATURE_MPU))
-			{
               tlb_flush(env, 0);
-			}
-			//pras
-			//if(needed_tid_length > 0 && val != env->cp15.c13_context && matchMeInPidTid(env))
-			//{
-			//	printf("pras: helper switches tid to: %d %d\n", val, matchMeInPidTid(env));
-			//}
             env->cp15.c13_context = val;
             break;
         default:
@@ -2253,7 +2228,6 @@ uint32_t HELPER(get_cp15)(CPUARMState *env, uint32_t insn)
         case 0:
             return env->cp15.c13_fcse;
         case 1:
-			printf("pras: helper get tid to: %d\n", env->cp15.c13_context);
             return env->cp15.c13_context;
         default:
             goto bad_reg;

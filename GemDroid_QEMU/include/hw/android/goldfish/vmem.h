@@ -14,8 +14,6 @@
 
 #include "cpu.h"
 
-//pras
-#include "gemdroid-tracer.h"
 // Call these functions instead of cpu_memory_rw_debug and
 // cpu_get_phys_page_debug to ensure virtual address translation always works
 // properly, and efficently, under KVM.

@@ -39,8 +39,6 @@ static EmuglBackendList* sBackendList = NULL;
 
 static void resetBackendList(int bitness) {
     delete sBackendList;
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     sBackendList = new EmuglBackendList(
             System::get()->getProgramDirectory().c_str(),
             bitness);
@@ -48,8 +46,6 @@ static void resetBackendList(int bitness) {
 
 static bool stringVectorContains(const StringVector& list,
                                  const char* value) {
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     for (size_t n = 0; n < list.size(); ++n) {
         if (!strcmp(list[n].c_str(), value)) {
             return true;
@@ -64,8 +60,6 @@ bool emuglConfig_init(EmuglConfig* config,
                       const char* gpu_option,
                       int bitness,
                       bool no_window) {
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     // zero all fields first.
     memset(config, 0, sizeof(*config));
 
@@ -164,8 +158,6 @@ bool emuglConfig_init(EmuglConfig* config,
 }
 
 void emuglConfig_setupEnv(const EmuglConfig* config) {
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     System* system = System::get();
 
     if (!config->enabled) {

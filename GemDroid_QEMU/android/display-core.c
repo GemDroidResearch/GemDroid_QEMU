@@ -27,8 +27,6 @@ coredisplay_refresh(DisplayState* ds)
 {
     (void)ds;
     vga_hw_update();
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 /* Don't do anything here because this callback can't differentiate
@@ -46,8 +44,6 @@ coredisplay_update(DisplayState* ds, int x, int y, int w, int h)
     (void)y;
     (void)w;
     (void)h;
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 /* This callback is normally used to indicate that the display resolution
@@ -58,8 +54,6 @@ static void
 coredisplay_resize(DisplayState* ds)
 {
     (void)ds;
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 void
@@ -71,6 +65,4 @@ coredisplay_init(DisplayState* ds)
     dcl->dpy_refresh = coredisplay_refresh;
     dcl->dpy_resize  = coredisplay_resize;
     register_displaychangelistener(ds, dcl);
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }

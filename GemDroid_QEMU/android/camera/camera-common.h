@@ -147,8 +147,6 @@ static __inline__ CameraInfo* _camera_info_alloc(void)
 {
     CameraInfo* ci;
     ANEW0(ci);
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return ci;
 }
 
@@ -168,8 +166,6 @@ static __inline__ void _camera_info_free(CameraInfo* ci)
             free(ci->frame_sizes);
         AFREE(ci);
     }
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 /* Describes a connected camera device.
@@ -188,8 +184,6 @@ _get_timestamp(void)
     struct timeval t;
     t.tv_sec = t.tv_usec = 0;
     gettimeofday(&t, NULL);
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return (uint64_t)t.tv_sec * 1000000LL + t.tv_usec;
 }
 
@@ -207,8 +201,6 @@ _camera_sleep(int millisec)
         t.tv_sec = (wake_at - stamp) / 1000000;
         t.tv_usec = (wake_at - stamp) - (uint64_t)t.tv_sec * 1000000;
     } while (select(0, NULL, NULL, NULL, &t) < 0 && errno == EINTR);
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 #endif  /* ANDROID_CAMERA_CAMERA_COMMON_H_ */

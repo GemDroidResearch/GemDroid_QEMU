@@ -14,12 +14,6 @@
 #elif defined(CONFIG_BYTESWAP_H)
 # include <byteswap.h>
 
-//pras
-#include "gemdroid-tracer.h"
-extern int needed_tid_length;
-extern int arm_helper_tid_now;
-#include <stdio.h>
-
 static inline uint16_t bswap16(uint16_t x)
 {
     return bswap_16(x);
@@ -224,30 +218,18 @@ typedef union {
  *   le   : little endian
  */
 
-static inline int ldub_p(const void *ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline int ldub_p(const void *ptr)
 {
-	if(needed_tid_length > 0 && mem_req == MEM_REQ_ARM_HELPER)
-	{
-		printf("@@ %d, ldub %x=%x %d\n", arm_helper_tid_now,  ptr, *(uint8_t *)ptr, mem_req);
-	}
     return *(uint8_t *)ptr;
 }
 
-static inline int ldsb_p(const void *ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline int ldsb_p(const void *ptr)
 {
-	if(needed_tid_length > 0 && mem_req == MEM_REQ_ARM_HELPER)
-	{
-		printf("@@ %d, ldub %x=%x %d\n", arm_helper_tid_now,  ptr, *(int8_t *)ptr, mem_req);
-	}
     return *(int8_t *)ptr;
 }
 
-static inline void stb_p(void *ptr, int v, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline void stb_p(void *ptr, int v)
 {
-	if(needed_tid_length > 0 && mem_req == MEM_REQ_ARM_HELPER)
-	{
-		printf("@@ %d, stb %x=%x %d\n", arm_helper_tid_now,  ptr, v, mem_req);
-	}
     *(uint8_t *)ptr = v;
 }
 
@@ -255,222 +237,180 @@ static inline void stb_p(void *ptr, int v, /*pras*/MEM_REQ_ORIGIN mem_req)
    operations.  Thus we don't need to play games with packed attributes, or
    inline byte-by-byte stores.  */
 
-static inline int lduw_p(const void *ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline int lduw_p(const void *ptr)
 {
     uint16_t r;
     memcpy(&r, ptr, sizeof(r));
-	if(needed_tid_length > 0 && mem_req == MEM_REQ_ARM_HELPER)
-	{
-		printf("@@ %d, lduw %x=%x %d\n", arm_helper_tid_now,  ptr, r, mem_req);
-	}
     return r;
 }
 
-static inline int ldsw_p(const void *ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline int ldsw_p(const void *ptr)
 {
     int16_t r;
     memcpy(&r, ptr, sizeof(r));
-	if(needed_tid_length > 0 && mem_req == MEM_REQ_ARM_HELPER)
-	{
-		printf("@@ %d, ldsw %x=%x %d\n", arm_helper_tid_now,  ptr, r, mem_req);
-	}
     return r;
 }
 
-static inline void stw_p(void *ptr, uint16_t v, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline void stw_p(void *ptr, uint16_t v)
 {
     memcpy(ptr, &v, sizeof(v));
-	if(needed_tid_length > 0 && mem_req == MEM_REQ_ARM_HELPER)
-	{
-		printf("@@ %d, stw %x=%x %d\n", arm_helper_tid_now,  ptr, v, mem_req);
-	}
 }
 
-static inline int ldl_p(const void *ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline int ldl_p(const void *ptr)
 {
     int32_t r;
     memcpy(&r, ptr, sizeof(r));
-	if(needed_tid_length > 0 && mem_req == MEM_REQ_ARM_HELPER)
-	{
-		//int a = 0;
-		printf("@@ %d, ldl %x=%x mem_req=%d needed_tid_length > 0: %d\n", arm_helper_tid_now,  ptr, r, mem_req, needed_tid_length > 0);// + 1/a);
-	}
-	//else if(needed_tid_length > 0)
-	//{
-	//	printf("%d, is accessing ldl_p\n", arm_helper_tid_now);
-	//}
     return r;
 }
 
-static inline void stl_p(void *ptr, uint32_t v, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline void stl_p(void *ptr, uint32_t v)
 {
     memcpy(ptr, &v, sizeof(v));
-	if(needed_tid_length > 0 && mem_req == MEM_REQ_ARM_HELPER)
-	{
-		printf("@@ %d, stl %x=%x %d\n", arm_helper_tid_now,  ptr, v, mem_req);
-		//if(arm_helper_tid_now == -1)
-		//{
-		//	int a = 0;
-		//	printf("de%dbug me!",1/a);
-		//}
-	}
-	//else if(needed_tid_length > 0)
-	//{
-	//	printf("%d, is accessing stl_p\n", arm_helper_tid_now);
-	//}
 }
 
-static inline uint64_t ldq_p(const void *ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline uint64_t ldq_p(const void *ptr)
 {
     uint64_t r;
     memcpy(&r, ptr, sizeof(r));
-	if(needed_tid_length > 0 && mem_req == MEM_REQ_ARM_HELPER)
-	{
-		printf("@@ %d, ldq %x=%x %d\n", arm_helper_tid_now,  ptr, r, mem_req);
-	}
     return r;
 }
 
-static inline void stq_p(void *ptr, uint64_t v, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline void stq_p(void *ptr, uint64_t v)
 {
     memcpy(ptr, &v, sizeof(v));
-	if(needed_tid_length > 0 && mem_req == MEM_REQ_ARM_HELPER)
-	{
-		printf("@@ %d, stq %x=%x %d\n", arm_helper_tid_now,  ptr, v, mem_req);
-	}
 }
 
-static inline int lduw_le_p(const void *ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline int lduw_le_p(const void *ptr)
 {
-    return (uint16_t)le_bswap(lduw_p(ptr, /*pras*/mem_req), 16);
+    return (uint16_t)le_bswap(lduw_p(ptr), 16);
 }
 
-static inline int ldsw_le_p(const void *ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline int ldsw_le_p(const void *ptr)
 {
-    return (int16_t)le_bswap(lduw_p(ptr, /*pras*/mem_req), 16);
+    return (int16_t)le_bswap(lduw_p(ptr), 16);
 }
 
-static inline int ldl_le_p(const void *ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline int ldl_le_p(const void *ptr)
 {
-    return le_bswap(ldl_p(ptr, /*pras*/mem_req), 32);
+    return le_bswap(ldl_p(ptr), 32);
 }
 
-static inline uint64_t ldq_le_p(const void *ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline uint64_t ldq_le_p(const void *ptr)
 {
-    return le_bswap(ldq_p(ptr, /*pras*/mem_req), 64);
+    return le_bswap(ldq_p(ptr), 64);
 }
 
-static inline void stw_le_p(void *ptr, int v, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline void stw_le_p(void *ptr, int v)
 {
-    stw_p(ptr, le_bswap(v, 16), /*pras*/mem_req);
+    stw_p(ptr, le_bswap(v, 16));
 }
 
-static inline void stl_le_p(void *ptr, int v, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline void stl_le_p(void *ptr, int v)
 {
-    stl_p(ptr, le_bswap(v, 32), /*pras*/mem_req);
+    stl_p(ptr, le_bswap(v, 32));
 }
 
-static inline void stq_le_p(void *ptr, uint64_t v, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline void stq_le_p(void *ptr, uint64_t v)
 {
-    stq_p(ptr, le_bswap(v, 64), /*pras*/mem_req);
+    stq_p(ptr, le_bswap(v, 64));
 }
 
 /* float access */
 
-static inline float32 ldfl_le_p(const void *ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline float32 ldfl_le_p(const void *ptr)
 {
     CPU_FloatU u;
-    u.l = ldl_le_p(ptr, /*pras*/mem_req);
+    u.l = ldl_le_p(ptr);
     return u.f;
 }
 
-static inline void stfl_le_p(void *ptr, float32 v, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline void stfl_le_p(void *ptr, float32 v)
 {
     CPU_FloatU u;
     u.f = v;
-    stl_le_p(ptr, u.l, /*pras*/mem_req);
+    stl_le_p(ptr, u.l);
 }
 
-static inline float64 ldfq_le_p(const void *ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline float64 ldfq_le_p(const void *ptr)
 {
     CPU_DoubleU u;
-    u.ll = ldq_le_p(ptr, /*pras*/mem_req);
+    u.ll = ldq_le_p(ptr);
     return u.d;
 }
 
-static inline void stfq_le_p(void *ptr, float64 v, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline void stfq_le_p(void *ptr, float64 v)
 {
     CPU_DoubleU u;
     u.d = v;
-    stq_le_p(ptr, u.ll, /*pras*/mem_req);
+    stq_le_p(ptr, u.ll);
 }
 
-static inline int lduw_be_p(const void *ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline int lduw_be_p(const void *ptr)
 {
-    return (uint16_t)be_bswap(lduw_p(ptr, /*pras*/mem_req), 16);
+    return (uint16_t)be_bswap(lduw_p(ptr), 16);
 }
 
-static inline int ldsw_be_p(const void *ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline int ldsw_be_p(const void *ptr)
 {
-    return (int16_t)be_bswap(lduw_p(ptr, /*pras*/mem_req), 16);
+    return (int16_t)be_bswap(lduw_p(ptr), 16);
 }
 
-static inline int ldl_be_p(const void *ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline int ldl_be_p(const void *ptr)
 {
-    return be_bswap(ldl_p(ptr, /*pras*/mem_req), 32);
+    return be_bswap(ldl_p(ptr), 32);
 }
 
-static inline uint64_t ldq_be_p(const void *ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline uint64_t ldq_be_p(const void *ptr)
 {
-    return be_bswap(ldq_p(ptr, /*pras*/mem_req), 64);
+    return be_bswap(ldq_p(ptr), 64);
 }
 
-static inline void stw_be_p(void *ptr, int v, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline void stw_be_p(void *ptr, int v)
 {
-    stw_p(ptr, be_bswap(v, 16), /*pras*/mem_req);
+    stw_p(ptr, be_bswap(v, 16));
 }
 
-static inline void stl_be_p(void *ptr, int v, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline void stl_be_p(void *ptr, int v)
 {
-    stl_p(ptr, be_bswap(v, 32), /*pras*/mem_req);
+    stl_p(ptr, be_bswap(v, 32));
 }
 
-static inline void stq_be_p(void *ptr, uint64_t v, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline void stq_be_p(void *ptr, uint64_t v)
 {
-    stq_p(ptr, be_bswap(v, 64), /*pras*/mem_req);
+    stq_p(ptr, be_bswap(v, 64));
 }
 
 /* float access */
 
-static inline float32 ldfl_be_p(const void *ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline float32 ldfl_be_p(const void *ptr)
 {
     CPU_FloatU u;
-    u.l = ldl_be_p(ptr, /*pras*/mem_req);
+    u.l = ldl_be_p(ptr);
     return u.f;
 }
 
-static inline void stfl_be_p(void *ptr, float32 v, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline void stfl_be_p(void *ptr, float32 v)
 {
     CPU_FloatU u;
     u.f = v;
-    stl_be_p(ptr, u.l, /*pras*/mem_req);
+    stl_be_p(ptr, u.l);
 }
 
-static inline float64 ldfq_be_p(const void *ptr, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline float64 ldfq_be_p(const void *ptr)
 {
     CPU_DoubleU u;
-    u.ll = ldq_be_p(ptr, /*pras*/mem_req);
+    u.ll = ldq_be_p(ptr);
     return u.d;
 }
 
-static inline void stfq_be_p(void *ptr, float64 v, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline void stfq_be_p(void *ptr, float64 v)
 {
     CPU_DoubleU u;
     u.d = v;
-    stq_be_p(ptr, u.ll, /*pras*/mem_req);
+    stq_be_p(ptr, u.ll);
 }
 
-static inline unsigned long leul_to_cpu(unsigned long v, /*pras*/MEM_REQ_ORIGIN mem_req)
+static inline unsigned long leul_to_cpu(unsigned long v)
 {
     /* In order to break an include loop between here and
        qemu-common.h, don't rely on HOST_LONG_BITS.  */

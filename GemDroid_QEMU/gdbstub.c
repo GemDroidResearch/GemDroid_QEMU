@@ -42,8 +42,6 @@
 #include "qemu/sockets.h"
 #include "sysemu/kvm.h"
 
-//pras
-#include "gemdroid-tracer.h"
 
 enum {
     GDB_SIGNAL_0 = 0,
@@ -477,28 +475,28 @@ static int put_packet(GDBState *s, const char *buf)
    Conveniently, these also handle the case where the buffer is mis-aligned.
  */
 #define GET_REG8(val) do { \
-    stb_p(mem_buf, val, /*pras*/MEM_REQ_GDB); \
+    stb_p(mem_buf, val); \
     return 1; \
     } while(0)
 #define GET_REG16(val) do { \
-    stw_p(mem_buf, val, /*pras*/MEM_REQ_GDB); \
+    stw_p(mem_buf, val); \
     return 2; \
     } while(0)
 #define GET_REG32(val) do { \
-    stl_p(mem_buf, val, /*pras*/MEM_REQ_GDB); \
+    stl_p(mem_buf, val); \
     return 4; \
     } while(0)
 #define GET_REG64(val) do { \
-    stq_p(mem_buf, val, /*pras*/MEM_REQ_GDB); \
+    stq_p(mem_buf, val); \
     return 8; \
     } while(0)
 
 #if TARGET_LONG_BITS == 64
 #define GET_REGL(val) GET_REG64(val)
-#define ldtul_p(addr) ldq_p(addr, /*pras*/MEM_REQ_GDB)
+#define ldtul_p(addr) ldq_p(addr)
 #else
 #define GET_REGL(val) GET_REG32(val)
-#define ldtul_p(addr) ldl_p(addr, /*pras*/MEM_REQ_GDB)
+#define ldtul_p(addr) ldl_p(addr)
 #endif
 
 #if defined(TARGET_I386)
@@ -529,8 +527,8 @@ static int cpu_gdb_read_register(CPUArchState *env, uint8_t *mem_buf, int n)
     } else if (n >= CPU_NB_REGS + 24) {
         n -= CPU_NB_REGS + 24;
         if (n < CPU_NB_REGS) {
-            stq_p(mem_buf, env->xmm_regs[n].XMM_Q(0), /*pras*/MEM_REQ_GDB);
-            stq_p(mem_buf + 8, env->xmm_regs[n].XMM_Q(1), /*pras*/MEM_REQ_GDB);
+            stq_p(mem_buf, env->xmm_regs[n].XMM_Q(0));
+            stq_p(mem_buf + 8, env->xmm_regs[n].XMM_Q(1));
             return 16;
         } else if (n == CPU_NB_REGS) {
             GET_REG32(env->mxcsr);
@@ -577,21 +575,21 @@ static int cpu_gdb_write_register(CPUArchState *env, uint8_t *mem_buf, int i)
     } else if (i >= CPU_NB_REGS + 24) {
         i -= CPU_NB_REGS + 24;
         if (i < CPU_NB_REGS) {
-            env->xmm_regs[i].XMM_Q(0) = ldq_p(mem_buf, /*pras*/MEM_REQ_GDB);
-            env->xmm_regs[i].XMM_Q(1) = ldq_p(mem_buf + 8, /*pras*/MEM_REQ_GDB);
+            env->xmm_regs[i].XMM_Q(0) = ldq_p(mem_buf);
+            env->xmm_regs[i].XMM_Q(1) = ldq_p(mem_buf + 8);
             return 16;
         } else if (i == CPU_NB_REGS) {
-            env->mxcsr = ldl_p(mem_buf, /*pras*/MEM_REQ_GDB);
+            env->mxcsr = ldl_p(mem_buf);
             return 4;
         }
     } else {
         i -= CPU_NB_REGS;
         switch (i) {
         case 0: env->eip = ldtul_p(mem_buf); return sizeof(target_ulong);
-        case 1: env->eflags = ldl_p(mem_buf, /*pras*/MEM_REQ_GDB); return 4;
+        case 1: env->eflags = ldl_p(mem_buf); return 4;
 #if defined(CONFIG_USER_ONLY)
 #define LOAD_SEG(index, sreg)\
-            tmp = ldl_p(mem_buf, /*pras*/MEM_REQ_GDB);\
+            tmp = ldl_p(mem_buf);\
             if (tmp != env->segs[sreg].selector)\
                 cpu_x86_load_seg(env, sreg, tmp);
 #else
@@ -606,9 +604,9 @@ static int cpu_gdb_write_register(CPUArchState *env, uint8_t *mem_buf, int i)
         case 6: LOAD_SEG(14, R_FS); return 4;
         case 7: LOAD_SEG(15, R_GS); return 4;
         /* 8...15 x87 regs.  */
-        case 16: env->fpuc = ldl_p(mem_buf, /*pras*/MEM_REQ_GDB); return 4;
+        case 16: env->fpuc = ldl_p(mem_buf); return 4;
         case 17:
-                 tmp = ldl_p(mem_buf, /*pras*/MEM_REQ_GDB);
+                 tmp = ldl_p(mem_buf);
                  env->fpstt = (tmp >> 11) & 7;
                  env->fpus = tmp & ~0x3800;
                  return 4;
@@ -648,7 +646,7 @@ static int cpu_gdb_read_register(CPUArchState *env, uint8_t *mem_buf, int n)
         /* fprs */
         if (gdb_has_xml)
             return 0;
-        stfq_p(mem_buf, env->fpr[n-32], /*pras*/MEM_REQ_GDB);
+        stfq_p(mem_buf, env->fpr[n-32]);
         return 8;
     } else {
         switch (n) {
@@ -898,7 +896,7 @@ static int cpu_gdb_write_register(CPUArchState *env, uint8_t *mem_buf, int n)
 {
     uint32_t tmp;
 
-    tmp = ldl_p(mem_buf, /*pras*/MEM_REQ_GDB);
+    tmp = ldl_p(mem_buf);
 
     /* Mask out low bit of PC to workaround gdb bugs.  This will probably
        cause problems if we ever implement the Jazelle DBX extensions.  */
@@ -1705,7 +1703,7 @@ static int gdb_handle_packet(GDBState *s, const char *line_buf)
         if (*p == ',')
             p++;
         len = strtoull(p, NULL, 16);
-        if (cpu_memory_rw_debug(ENV_GET_CPU(s->g_cpu), addr, mem_buf, len, 0, /*pras*/MEM_REQ_GDB) != 0) {
+        if (cpu_memory_rw_debug(ENV_GET_CPU(s->g_cpu), addr, mem_buf, len, 0) != 0) {
             put_packet (s, "E14");
         } else {
             memtohex(buf, mem_buf, len);
@@ -1720,7 +1718,7 @@ static int gdb_handle_packet(GDBState *s, const char *line_buf)
         if (*p == ':')
             p++;
         hextomem(mem_buf, p, len);
-        if (cpu_memory_rw_debug(ENV_GET_CPU(s->g_cpu), addr, mem_buf, len, 1, /*pras*/MEM_REQ_GDB) != 0)
+        if (cpu_memory_rw_debug(ENV_GET_CPU(s->g_cpu), addr, mem_buf, len, 1) != 0)
             put_packet(s, "E14");
         else
             put_packet(s, "OK");

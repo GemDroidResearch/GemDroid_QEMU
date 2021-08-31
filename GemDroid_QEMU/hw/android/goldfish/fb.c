@@ -19,6 +19,12 @@
 #include "hw/hw.h"
 #include "ui/console.h"
 
+//GemDroid added
+//For GemDroid Tracer Functionality
+#include "gemdroid-tracer.h"
+//GemDroid end
+
+
 /* These values *must* match the platform definitions found under
  * hardware/libhardware/include/hardware/hardware.h
  */
@@ -469,6 +475,14 @@ static void goldfish_fb_update_display(void *opaque)
         s->need_update = 0;
     }
 
+    //GemDroid adds "comments"
+    /*base is the physical address in the emulated system's FrameBuffer region.
+    * Through qemu_get_ram_ptr we get a pointer to the address region in the host systems memory     region.
+    * Thus, src_line is a pointer to the host systems memory region. Initially, we move data from     src_line to dst_line pointer (which is also in
+    * the host systems memory. Now, next iteration we check if the application has changed the da    ta in the src_line pointed memory region.
+    * If it has, copy it into dst_line, from where it is displayed.
+    *///GemDroid end "comments"
+
     src_line  = qemu_get_ram_ptr( base );
 
     dst_line  = s->ds->surface->data;
@@ -505,6 +519,19 @@ static void goldfish_fb_update_display(void *opaque)
     }
 #endif /* STATS */
 
+     //GemDroid added
+     //FB place 2 : change detected in display state. Copy to DRAM memory mapped Framebuffer locat    ion
+     if(IP_tracer)
+         {
+         long int write_size =  s->ds->surface->pf.bytes_per_pixel * (rect.ymax-rect.ymin) * (rect.xmax-rect.xmin);
+         //printf("FB-UP: Read_frm DRAM, add= %zu size= %ld\n", s->fb_base, write_size);
+         //printf("FB-UP-R: %x %ld\n", s->fb_base, write_size);
+         printf("FB-UP: %x %ld\n", s->fb_base, write_size);
+                 cpu_inst_print_flag = true;
+                 //           rect.ymin, rect.ymax-rect.ymin, rect.xmin, rect.xmax-rect.xmin);
+         }
+     //GemDroid End
+
     if (s->blank)
     {
         memset( dst_line, 0, height*pitch );
@@ -530,6 +557,18 @@ static void goldfish_fb_update_display(void *opaque)
            rect.ymin, rect.ymax-rect.ymin, rect.xmin, rect.xmax-rect.xmin);
 #endif
 
+    //GemDroid added
+    if(IP_tracer)
+      {
+              long int write_size =  s->ds->surface->pf.bytes_per_pixel * (rect.ymax-rect.ymin) * (rect.xmax-rect.xmin);
+              //printf("FB-UP-R: %x %ld\n", s->fb_base, write_size);
+              //printf("FB-UP-R: %x %ld\n", s->fb_base, write_size);
+              printf("FB-UP: %x %ld\n", s->fb_base, write_size);
+              cpu_inst_print_flag = true;
+              //rect.ymin, rect.ymax-rect.ymin, rect.xmin, rect.xmax-rect.xmin);
+      }
+      //GemDroid End
+
     dpy_update(s->ds, rect.xmin, rect.ymin, rect.xmax-rect.xmin, rect.ymax-rect.ymin);
 }
 
@@ -544,6 +583,16 @@ static uint32_t goldfish_fb_read(void *opaque, hwaddr offset)
 {
     uint32_t ret;
     struct goldfish_fb_state *s = opaque;
+
+    //GemDroid added
+    static long log = 0;
+    if(IP_tracer)
+        {
+        log ++;
+                printf("FB-IN-R: 0 %d \n",  offset);
+                cpu_inst_print_flag = true;
+        }
+    //GemDroid end
 
     switch(offset) {
         case FB_GET_WIDTH:

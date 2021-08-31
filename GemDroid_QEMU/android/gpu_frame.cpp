@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <stdio.h>
-
 #include "android/base/Limits.h"
 
 #include "android/opengl/GpuFrameBridge.h"
@@ -48,8 +46,6 @@ static void onNewGpuFrame(void* opaque,
 
     GpuFrameBridge* bridge = reinterpret_cast<GpuFrameBridge*>(opaque);
     bridge->postFrame(width, height, pixels);
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 void gpu_frame_set_post_callback(
@@ -63,6 +59,4 @@ void gpu_frame_set_post_callback(
     CHECK(sBridge);
 
     android_setPostCallback(onNewGpuFrame, sBridge);
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }

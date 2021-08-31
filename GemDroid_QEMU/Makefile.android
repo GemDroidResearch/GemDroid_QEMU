@@ -258,7 +258,7 @@ endef
 
 # The common libraries
 #
-QEMU_SYSTEM_LDLIBS := -lm
+QEMU_SYSTEM_LDLIBS := -lm -L./d4-7 -ld4 -L./d4-7-64bit -ld4-64
 ifeq ($(HOST_OS),windows)
   QEMU_SYSTEM_LDLIBS += -mwindows -mconsole
 endif

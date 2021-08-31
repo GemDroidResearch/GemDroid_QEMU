@@ -120,8 +120,6 @@ void *loadpng(const char *fn, unsigned *_width, unsigned *_height)
     *_width = width;
     *_height = height;
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return (void*) data;
 }
 
@@ -147,8 +145,6 @@ png_reader_read_data( png_structp  png_ptr,
 
   memcpy( data, reader->cursor, avail );
   reader->cursor += avail;
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 }
 
 
@@ -254,8 +250,6 @@ void *readpng(const unsigned char *base, size_t   size, unsigned *_width, unsign
 
     *_width = width;
     *_height = height;
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
 
     return (void*) data;
 }

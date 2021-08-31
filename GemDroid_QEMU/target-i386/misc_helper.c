@@ -35,12 +35,12 @@ static inline void check_io(CPUX86State *env, int addr, int size)
         ((env->tr.flags >> DESC_TYPE_SHIFT) & 0xf) != 9 ||
         env->tr.limit < 103)
         goto fail;
-    io_offset = cpu_lduw_kernel(env, env->tr.base + 0x66, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED);
+    io_offset = cpu_lduw_kernel(env, env->tr.base + 0x66);
     io_offset += (addr >> 3);
     /* Note: the check needs two bytes */
     if ((io_offset + 1) > env->tr.limit)
         goto fail;
-    val = cpu_lduw_kernel(env, env->tr.base + io_offset, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED);
+    val = cpu_lduw_kernel(env, env->tr.base + io_offset);
     val >>= (addr & 7);
     mask = (1 << size) - 1;
     /* all bits must be zero to allow the I/O */

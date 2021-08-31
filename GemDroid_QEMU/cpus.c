@@ -36,6 +36,13 @@
 
 #include "sysemu/cpus.h"
 
+
+//GemDroid added
+//For GemDroid Tracer Functionality
+#include "gemdroid-tracer.h"
+//GemDroid end
+
+
 static CPUState *cur_cpu;
 static CPUState *next_cpu;
 

@@ -23,8 +23,6 @@
 #include "exec/cputlb.h"
 #include "exec/ram_addr.h"
 
-//pras
-#include "gemdroid-tracer.h"
 /* statistics */
 int tlb_flush_count;
 
@@ -331,7 +329,7 @@ tb_page_addr_t get_page_addr_code(CPUArchState *env1, target_ulong addr)
     mmu_idx = cpu_mmu_index(env1);
     if (unlikely(env1->tlb_table[mmu_idx][page_index].addr_code !=
                  (addr & TARGET_PAGE_MASK))) {
-        cpu_ldub_code(env1, addr, MEM_REQ_TLB);
+        cpu_ldub_code(env1, addr);
     }
     pd = env1->tlb_table[mmu_idx][page_index].addr_code & ~TARGET_PAGE_MASK;
     if (pd > IO_MEM_ROM && !(pd & IO_MEM_ROMD)) {

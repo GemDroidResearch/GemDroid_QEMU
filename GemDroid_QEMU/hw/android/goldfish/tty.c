@@ -9,7 +9,6 @@
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
 */
-#include "gemdroid-tracer.h"
 #include "migration/qemu-file.h"
 #include "sysemu/char.h"
 #include "hw/android/goldfish/device.h"
@@ -109,129 +108,6 @@ static uint32_t goldfish_tty_read(void *opaque, hwaddr offset)
     }
 }
 
-static int printLength = 1000;
-static char pras_temp_line[1000];
-static int pras_line_length = 0;
-static void newPidAccumulatorFromLogcatCommand()
-{
-//it comes here when pras: tracked: is found in the line:
-	char *tidPtr = (strstr(pras_temp_line, NEEDED_PROC_NAME)+strlen(NEEDED_PROC_NAME));
-	//printf("pras_temp_line = %s TID=%s\n", pras_temp_line, tidPtr);
-//this one understands string as int :P gets tid
-	int temp_it = 0, tid_now = 0;
-	for(temp_it = 0; temp_it < 9; temp_it++)
-	{
-		//printf("looking at %c ", pras_temp_line[6+temp_it]);
-		if(*tidPtr >= '0' && *tidPtr <= '9')
-		{
-			tid_now = (tid_now*10)+(*tidPtr - '0');
-			//printf("tid = %d\n", tid_now);
-		}
-		if(tid_now != 0 && (*tidPtr)=='\0')break;
-		tidPtr ++;
-	}
-	//pras_temp_line[0] = '\0';
-	pras_line_length = 0;
-	//printf("%d = int tid\n", tid_now);
-	if(tid_now == 0)
-	{
-		return;
-		//printf("GUNDABAD: ttying wrong? %s ****%s*****\n", pras_temp_line, NEEDED_PROC_NAME);
-		//exit(0);
-	}
-	needed_pid = tid_now;
-	int tIter = 0;
-	for(tIter = 0; tIter < needed_tid_length; tIter++)
-	{
-		if(tid_now == needed_tids[tIter])
-		{
-			break;
-		}
-	}
-	if(tIter == needed_tid_length)
-	{
-		if(needed_tid_length > 0)
-		{
-			int temp = needed_tids[0];
-			needed_tids[0]=tid_now;
-			needed_tids[tIter] = temp;
-			temp = print_tids[0];
-			print_tids[0]= 0;//print_tids[tIter];
-			print_tids[tIter] = temp;
-			printf("inserting new tid: %d [%s] as %dth place <><> needed_tids[0]=%d, needed_tids[len]=%d\n", tid_now, pras_temp_line, tIter, needed_tids[0], needed_tids[tIter]);
-			if(needed_tid_length == 999)
-			{
-				printf("tracking 999 threads!!!\n");
-				exit(0);
-			}
-		}
-		else
-		{
-			needed_tids[tIter] = tid_now;
-			printf("inserting new tid: %d [%s] as %dth place <><> needed_tids[0]=%d, needed_tids[len]=%d\n", tid_now, pras_temp_line, tIter, needed_tids[0], needed_tids[tIter]);
-		}
-		needed_tid_length++;
-	}
-}
-static void oldPidAccumulatorFromTopCommand()
-{
-
-	//printf("activitymanager: %s\n",pras_temp_line);
-	if(pras_temp_line[1] == ' ')
-	{
-		int temp_it = 0, tid_now = 0;
-		for(temp_it = 0; temp_it < 9; temp_it++)
-		{
-			//printf("looking at %c ", pras_temp_line[6+temp_it]);
-			if(pras_temp_line[6+temp_it] != ' ')
-			{
-				tid_now = (tid_now*10)+(pras_temp_line[6+temp_it] - '0');
-				//printf("tid = %d\n", tid_now);
-			}
-			if(tid_now != 0 && pras_temp_line[6+temp_it]==' ')break;
-		}
-		//printf("need_id = %d\n", tid_now);
-
-		needed_pid = tid_now;
-		if(needed_pid == 0)
-		{
-			printf("GUNDABAD: ttying wrong? %s ****%s*****\n", pras_temp_line, NEEDED_PROC_NAME);
-			exit(0);
-		}
-		int tIter = 0;
-		for(tIter = 0; tIter < needed_tid_length; tIter++)
-		{
-			if(tid_now == needed_tids[tIter])
-			{
-				break;
-			}
-		}
-		if(tIter == needed_tid_length)
-		{
-			if(needed_tid_length > 0)
-			{
-				int temp = needed_tids[0];
-				needed_tids[0]=tid_now;
-				needed_tids[tIter] = temp;
-				temp = print_tids[0];
-				print_tids[0]= 0;//print_tids[tIter];
-				print_tids[tIter] = temp;
-				printf("inserting new tid: %d [%s] as %dth place <><> needed_tids[0]=%d, needed_tids[len]=%d\n", tid_now, pras_temp_line, tIter, needed_tids[0], needed_tids[tIter]);
-				if(needed_tid_length == 999)
-				{
-					printf("tracking 999 threads!!!\n");
-					exit(0);
-				}
-			}
-			else
-			{
-				needed_tids[tIter] = tid_now;
-				printf("inserting new tid: %d [%s] as %dth place <><> needed_tids[0]=%d, needed_tids[len]=%d\n", tid_now, pras_temp_line, tIter, needed_tids[0], needed_tids[tIter]);
-			}
-			needed_tid_length++;
-		}
-	}
-}
 static void goldfish_tty_write(void *opaque, hwaddr offset, uint32_t value)
 {
     struct tty_state *s = (struct tty_state *)opaque;
@@ -255,100 +131,53 @@ static void goldfish_tty_write(void *opaque, hwaddr offset, uint32_t value)
                     }
                     break;
 
-				case TTY_CMD_INT_ENABLE:
-					if(!s->ready) {
-						if(s->data_count > 0)
-							goldfish_device_set_irq(&s->dev, 0, 1);
-						s->ready = 1;
-					}
-					break;
+                case TTY_CMD_INT_ENABLE:
+                    if(!s->ready) {
+                        if(s->data_count > 0)
+                            goldfish_device_set_irq(&s->dev, 0, 1);
+                        s->ready = 1;
+                    }
+                    break;
 
-				case TTY_CMD_WRITE_BUFFER:
-					if(s->cs) {
-						int len;
-						target_ulong  buf;
+                case TTY_CMD_WRITE_BUFFER:
+                    if(s->cs) {
+                        int len;
+                        target_ulong  buf;
 
-						buf = s->ptr;
-						len = s->ptr_len;
+                        buf = s->ptr;
+                        len = s->ptr_len;
 
-						while (len) {
-							char   temp[64];
-							int    to_write = sizeof(temp);
-							if (to_write > len)
-								to_write = len;
+                        while (len) {
+                            char   temp[64];
+                            int    to_write = sizeof(temp);
+                            if (to_write > len)
+                                to_write = len;
 
-							safe_memory_rw_debug(current_cpu, buf, (uint8_t*)temp, to_write, 0);
-							//orig: play safe:
-							//qemu_chr_write(s->cs, (const uint8_t*)temp, to_write);
-							//pras
-							//temp[63] = '\0';
-							//printf("pras: %s\n", temp);
-							int my_iter = 0;
-							for(my_iter = 0; my_iter < to_write; my_iter++)
-							{
-								pras_temp_line[pras_line_length] = temp[my_iter];
-								pras_temp_line[pras_line_length+1] = '\0';
-								if(temp[my_iter] == '\n')
-								{
-									//if(strstr(pras_temp_line, "ActivityManager"))
-									if(strstr(pras_temp_line, NEEDED_PROC_NAME))
-									{
-										//pras
-#if (NEEDED_PROC_NAME_LOGCAT_FLAG)
-										newPidAccumulatorFromLogcatCommand();
-#else
-										oldPidAccumulatorFromTopCommand();
-#endif
-									}
-#if (NEEDED_PROC_NAME_LOGCAT_FLAG)
-									else if(strstr(pras_temp_line, "pras_"))
-									{
-										printf("%s",pras_temp_line);
-									}
-#endif
-									//DO NOT DO THIS pras_temp_line[0]='\0';
-									pras_line_length = 0;
-								}
-								pras_line_length++;
-							}
-								//all three comments qemu_chr_write(s->cs, (const uint8_t*)temp, to_write);
-								//all three comments printLength --;
-								//all three comments printf("printLength = %d\n", printLength);
-							if(needed_pid == -1 && printLength)
-							{
-								qemu_chr_write(s->cs, (const uint8_t*)temp, to_write);
-								//printf(" true? %d, %d\n", needed_pid, printLength);
-								printLength--;
-							}
-							//else
-							//{
-							//	//printf(" false? %d, %d\n", needed_pid, printLength);
-							//}
+                            safe_memory_rw_debug(current_cpu, buf, (uint8_t*)temp, to_write, 0);
+                            qemu_chr_write(s->cs, (const uint8_t*)temp, to_write);
                             buf += to_write;
-							//printf("pras: goldfish_tty_write: got %d bytes from %llx [len=%d]\n", s->ptr_len, (unsigned long long)s->ptr, len);
                             len -= to_write;
-							//printf("pras: goldfish_tty_write: got %d bytes from %llx [len=%d]\n", s->ptr_len, (unsigned long long)s->ptr, len);
                         }
                         D("goldfish_tty_write: got %d bytes from %llx\n", s->ptr_len, (unsigned long long)s->ptr);
                     }
-					break;
+                    break;
 
-				case TTY_CMD_READ_BUFFER:
-					if(s->ptr_len > s->data_count)
-						E("goldfish_tty_write: reading more data than available %d %d\n", s->ptr_len, s->data_count);
-					safe_memory_rw_debug(current_cpu, s->ptr, s->data, s->ptr_len,1);
-					D("goldfish_tty_write: read %d bytes to %llx\n", s->ptr_len, (unsigned long long)s->ptr);
-					if(s->data_count > s->ptr_len)
-						memmove(s->data, s->data + s->ptr_len, s->data_count - s->ptr_len);
-					s->data_count -= s->ptr_len;
-					if(s->data_count == 0 && s->ready)
-						goldfish_device_set_irq(&s->dev, 0, 0);
-					break;
+                case TTY_CMD_READ_BUFFER:
+                    if(s->ptr_len > s->data_count)
+                        E("goldfish_tty_write: reading more data than available %d %d\n", s->ptr_len, s->data_count);
+                    safe_memory_rw_debug(current_cpu, s->ptr, s->data, s->ptr_len,1);
+                    D("goldfish_tty_write: read %d bytes to %llx\n", s->ptr_len, (unsigned long long)s->ptr);
+                    if(s->data_count > s->ptr_len)
+                        memmove(s->data, s->data + s->ptr_len, s->data_count - s->ptr_len);
+                    s->data_count -= s->ptr_len;
+                    if(s->data_count == 0 && s->ready)
+                        goldfish_device_set_irq(&s->dev, 0, 0);
+                    break;
 
-				default:
-					E("goldfish_tty_write: Bad command %x\n", value);
-			};
-			break;
+                default:
+                    E("goldfish_tty_write: Bad command %x\n", value);
+            };
+            break;
 
         case TTY_DATA_PTR:
             uint64_set_low(&s->ptr, value);

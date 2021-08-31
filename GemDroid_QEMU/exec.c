@@ -32,9 +32,6 @@
 #include <unistd.h>
 #include <inttypes.h>
 
-
-//pras
-#include "gemdroid-tracer.h"
 #include "cpu.h"
 #include "exec/exec-all.h"
 #include "qemu-common.h"
@@ -155,18 +152,14 @@ static int cpu_common_load(QEMUFile *f, void *opaque, int version_id)
     return 0;
 }
 #endif
-extern int matchMeInPidTid(CPUArchState *);
+
 CPUState *qemu_get_cpu(int cpu_index)
 {
     CPUState *cpu;
 
     CPU_FOREACH(cpu) {
         if (cpu->cpu_index == cpu_index)
-		{
-			//pras
-			printf("%d<<=matched in qemu?\n", matchMeInPidTid((cpu->env_ptr)));
             return cpu;
-		}
     }
     return NULL;
 }
@@ -182,8 +175,6 @@ void cpu_exec_init(CPUArchState *env)
     int cpu_index = 0;
     CPUState *cpu1;
     CPU_FOREACH(cpu1) {
-			//pras
-			printf("%d<<=matched in qemuXC?\n", matchMeInPidTid((cpu1->env_ptr)));
         cpu_index++;
     }
     cpu->cpu_index = cpu_index;
@@ -1453,7 +1444,7 @@ static void notdirty_mem_writeb(void *opaque, hwaddr ram_addr,
     if (!cpu_physical_memory_get_dirty_flag(ram_addr, DIRTY_MEMORY_CODE)) {
         tb_invalidate_phys_page_fast0(ram_addr, 1);
     }
-    stb_p(qemu_get_ram_ptr(ram_addr), val, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+    stb_p(qemu_get_ram_ptr(ram_addr), val);
     cpu_physical_memory_set_dirty_flag(ram_addr, DIRTY_MEMORY_MIGRATION);
     cpu_physical_memory_set_dirty_flag(ram_addr, DIRTY_MEMORY_VGA);
     /* we remove the notdirty callback only if the code has been
@@ -1470,7 +1461,7 @@ static void notdirty_mem_writew(void *opaque, hwaddr ram_addr,
     if (!cpu_physical_memory_get_dirty_flag(ram_addr, DIRTY_MEMORY_CODE)) {
         tb_invalidate_phys_page_fast0(ram_addr, 1);
     }
-    stw_p(qemu_get_ram_ptr(ram_addr), val, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+    stw_p(qemu_get_ram_ptr(ram_addr), val);
     cpu_physical_memory_set_dirty_flag(ram_addr, DIRTY_MEMORY_MIGRATION);
     cpu_physical_memory_set_dirty_flag(ram_addr, DIRTY_MEMORY_VGA);
     /* we remove the notdirty callback only if the code has been
@@ -1487,7 +1478,7 @@ static void notdirty_mem_writel(void *opaque, hwaddr ram_addr,
     if (!cpu_physical_memory_get_dirty_flag(ram_addr, DIRTY_MEMORY_CODE)) {
         tb_invalidate_phys_page_fast0(ram_addr, 1);
     }
-    stl_p(qemu_get_ram_ptr(ram_addr), val, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+    stl_p(qemu_get_ram_ptr(ram_addr), val);
     cpu_physical_memory_set_dirty_flag(ram_addr, DIRTY_MEMORY_MIGRATION);
     cpu_physical_memory_set_dirty_flag(ram_addr, DIRTY_MEMORY_VGA);
     /* we remove the notdirty callback only if the code has been
@@ -1929,21 +1920,17 @@ void cpu_physical_memory_rw(hwaddr addr, void *buf,
                    potential bugs */
                 if (l >= 4 && ((addr1 & 3) == 0)) {
                     /* 32 bit write access */
-					//if(current_cpu && matchMeInPidTid(current_cpu->env_ptr))
-					//{
-					//	printf("pras: exec: %x, cond result = %d, exec = %d, inv = %d\n", current_cpu, (current_cpu && matchMeInPidTid(current_cpu->env_ptr)), MEM_REQ_EXEC, MEM_REQ_INVALID);
-					//}
-                    val = ldl_p(buf8, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+                    val = ldl_p(buf8);
                     io_mem_write(io_index, addr1, val, 4);
                     l = 4;
                 } else if (l >= 2 && ((addr1 & 1) == 0)) {
                     /* 16 bit write access */
-                    val = lduw_p(buf8, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+                    val = lduw_p(buf8);
                     io_mem_write(io_index, addr1, val, 2);
                     l = 2;
                 } else {
                     /* 8 bit write access */
-                    val = ldub_p(buf8, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+                    val = ldub_p(buf8);
                     io_mem_write(io_index, addr1, val, 1);
                     l = 1;
                 }
@@ -1966,17 +1953,17 @@ void cpu_physical_memory_rw(hwaddr addr, void *buf,
                 if (l >= 4 && ((addr1 & 3) == 0)) {
                     /* 32 bit read access */
                     val = io_mem_read(io_index, addr1, 4);
-                    stl_p(buf8, val, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+                    stl_p(buf8, val);
                     l = 4;
                 } else if (l >= 2 && ((addr1 & 1) == 0)) {
                     /* 16 bit read access */
                     val = io_mem_read(io_index, addr1, 2);
-                    stw_p(buf8, val, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+                    stw_p(buf8, val);
                     l = 2;
                 } else {
                     /* 8 bit read access */
                     val = io_mem_read(io_index, addr1, 1);
-                    stb_p(buf8, val, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+                    stb_p(buf8, val);
                     l = 1;
                 }
             } else {
@@ -2210,22 +2197,13 @@ static inline uint32_t ldl_phys_internal(hwaddr addr,
             (addr & ~TARGET_PAGE_MASK);
         switch (endian) {
             case DEVICE_LITTLE_ENDIAN:
-				//pras
-				//if(current_cpu && matchMeInPidTid(current_cpu->env_ptr))
-				//{
-				//	printf("pras: 1.1exec: %x, cond result = %d, exec = %d, inv = %d\n", current_cpu, (current_cpu && matchMeInPidTid(current_cpu->env_ptr)), MEM_REQ_EXEC, MEM_REQ_INVALID);
-				//}
-                val = ldl_le_p(ptr, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+                val = ldl_le_p(ptr);
                 break;
             case DEVICE_BIG_ENDIAN:
-                val = ldl_be_p(ptr, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+                val = ldl_be_p(ptr);
                 break;
             default:
-				//if(current_cpu && matchMeInPidTid(current_cpu->env_ptr))
-				//{
-				//	printf("pras: 1exec: %x, cond result = %d, exec = %d, inv = %d\n", current_cpu, (current_cpu && matchMeInPidTid(current_cpu->env_ptr)), MEM_REQ_EXEC, MEM_REQ_INVALID);
-				//}
-                val = ldl_p(ptr, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+                val = ldl_p(ptr);
                 break;
         }
     }
@@ -2286,13 +2264,13 @@ static inline uint64_t ldq_phys_internal(hwaddr addr,
             (addr & ~TARGET_PAGE_MASK);
         switch (endian) {
         case DEVICE_LITTLE_ENDIAN:
-            val = ldq_le_p(ptr, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+            val = ldq_le_p(ptr);
             break;
         case DEVICE_BIG_ENDIAN:
-            val = ldq_be_p(ptr, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+            val = ldq_be_p(ptr);
             break;
         default:
-            val = ldq_p(ptr, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+            val = ldq_p(ptr);
             break;
         }
     }
@@ -2361,13 +2339,13 @@ static inline uint32_t lduw_phys_internal(hwaddr addr,
             (addr & ~TARGET_PAGE_MASK);
         switch (endian) {
         case DEVICE_LITTLE_ENDIAN:
-            val = lduw_le_p(ptr, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+            val = lduw_le_p(ptr);
             break;
         case DEVICE_BIG_ENDIAN:
-            val = lduw_be_p(ptr, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+            val = lduw_be_p(ptr);
             break;
         default:
-            val = lduw_p(ptr, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+            val = lduw_p(ptr);
             break;
         }
     }
@@ -2414,7 +2392,7 @@ void stl_phys_notdirty(hwaddr addr, uint32_t val)
     } else {
         unsigned long addr1 = (pd & TARGET_PAGE_MASK) + (addr & ~TARGET_PAGE_MASK);
         ptr = qemu_get_ram_ptr(addr1);
-        stl_p(ptr, val, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+        stl_p(ptr, val);
 
         if (unlikely(in_migration)) {
             if (cpu_physical_memory_is_clean(addr1)) {
@@ -2457,7 +2435,7 @@ void stq_phys_notdirty(hwaddr addr, uint64_t val)
     } else {
         ptr = qemu_get_ram_ptr(pd & TARGET_PAGE_MASK) +
             (addr & ~TARGET_PAGE_MASK);
-        stq_p(ptr, val, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+        stq_p(ptr, val);
     }
 }
 
@@ -2498,13 +2476,13 @@ static inline void stl_phys_internal(hwaddr addr, uint32_t val,
         ptr = qemu_get_ram_ptr(addr1);
         switch (endian) {
         case DEVICE_LITTLE_ENDIAN:
-            stl_le_p(ptr, val, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+            stl_le_p(ptr, val);
             break;
         case DEVICE_BIG_ENDIAN:
-            stl_be_p(ptr, val, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+            stl_be_p(ptr, val);
             break;
         default:
-            stl_p(ptr, val, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+            stl_p(ptr, val);
             break;
         }
         invalidate_and_set_dirty(addr1, 4);
@@ -2570,13 +2548,13 @@ static inline void stw_phys_internal(hwaddr addr, uint32_t val,
         ptr = qemu_get_ram_ptr(addr1);
         switch (endian) {
         case DEVICE_LITTLE_ENDIAN:
-            stw_le_p(ptr, val, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+            stw_le_p(ptr, val);
             break;
         case DEVICE_BIG_ENDIAN:
-            stw_be_p(ptr, val, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+            stw_be_p(ptr, val);
             break;
         default:
-            stw_p(ptr, val, /*pras*/((current_cpu && matchMeInPidTid(current_cpu->env_ptr))?MEM_REQ_EXEC:MEM_REQ_INVALID));
+            stw_p(ptr, val);
             break;
         }
         if (cpu_physical_memory_is_clean(addr1)) {
@@ -2628,7 +2606,7 @@ void stq_be_phys(hwaddr addr, uint64_t val)
 
 /* virtual memory access for debug (includes writing to ROM) */
 int cpu_memory_rw_debug(CPUState *cpu, target_ulong addr,
-                        void *buf, int len, int is_write, /*pras*/ MEM_REQ_ORIGIN mem_req)
+                        void *buf, int len, int is_write)
 {
     int l;
     hwaddr phys_addr;
@@ -2652,30 +2630,6 @@ int cpu_memory_rw_debug(CPUState *cpu, target_ulong addr,
         else
 #endif
             cpu_physical_memory_rw(phys_addr, buf8, l, is_write);
-		//pras
-		if(twoAts && matchMeInPidTid(env))
-		{
-			if(MEM_REQ_DISAS != mem_req)
-			{
-				char *temp = (char *) malloc(l*2 + 1);
-				temp[0]='\0';
-				int i = 0;
-				for(;i<l;i++)
-				{
-					sprintf(temp+strlen(temp), "%x", (uint8_t)buf8[i]);
-				}
-				temp[l*2] = '\0';
-				if(is_write)
-				{
-					printf("@@ %d, st(%x,%x=%s) (%d, %d, %d)\n",getMeContextId(env), getMePCVal(env), addr, temp, mem_req, l, len);
-				}
-				else
-				{
-					printf("@@ %d, ld(%x,%x=%s) (%d, %d, %d)\n",getMeContextId(env), getMePCVal(env), addr, temp, mem_req, l, len);
-				}
-				free(temp);
-			}
-		}
         len -= l;
         buf8 += l;
         addr += l;

@@ -9,8 +9,6 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
-#include<stdio.h>
-
 #include "android/cpu_accelerator.h"
 
 // This source acts as a small C++ -> C bridge between android/emulation/
@@ -30,7 +28,5 @@ extern "C" bool android_hasCpuAcceleration(char** status_p) {
         *status_p = ASTRDUP(status.c_str());
     }
 
-	//pras
-	//printf("pras debug: %s %s %ld\n", __FILE__, __FUNCTION__, __LINE__);
     return accel != android::CPU_ACCELERATOR_NONE;
 }

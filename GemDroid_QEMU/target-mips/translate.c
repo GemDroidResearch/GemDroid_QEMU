@@ -8416,7 +8416,7 @@ gen_intermediate_code_internal (CPUMIPSState *env, TranslationBlock *tb,
         }
         if (num_insns + 1 == max_insns && (tb->cflags & CF_LAST_IO))
             gen_io_start();
-        ctx.opcode = cpu_ldl_code(env, ctx.pc, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED);
+        ctx.opcode = cpu_ldl_code(env, ctx.pc);
         decode_opc(env, &ctx);
         ctx.pc += 4;
         num_insns++;

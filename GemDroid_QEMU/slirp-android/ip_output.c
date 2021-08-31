@@ -38,6 +38,11 @@
  * terms and conditions of the copyright.
  */
 
+//GemDroid added
+//For GemDroid Tracer Functionality
+#include "gemdroid-tracer.h"
+//GemDroid end
+
 #include <slirp.h>
 
 u_int16_t ip_id;
@@ -94,6 +99,65 @@ ip_output(struct socket *so, struct mbuf *m0)
 	/*
 	 * If small enough for interface, can just send directly.
 	 */
+
+         //GemDroid adds "comments"
+         /*GemDroid Comments
+                 When a TCP/IP program starts in the guest OS, the following functions are called.
+                 ne2000_ioport_write
+                 qemu_send_packet
+                 slirp_send_packet
+                 slirp_input
+                 ip_input
+                 tcp_input
+                 tcp_fconnect
+                 Then a socket is made.
+                 The socket is set to async mode (FIONBIO) so that it is checked by select() funct    ion
+                 to determine whether it can receive or send data. If there is data which can be
+                 received or sent, recv() or send() are used.
+ 
+                 It is checked periodically in main_loop() in vl.c by
+                 calling slirp_select_fill(),select() and slirp_select_poll().
+ 
+                 Data are sent by these functions:
+                 slirp_select_poll in slirp.c
+                 tcp_input in slirp_select_poll() in slirp.c
+                 sbappend in tcp_input.c:574
+                 send in sbappend() in sbuf.c
+ 
+                 Data are received by these functions:
+                 slirp_select_poll in slirp.c
+                 soread in slirp_select_poll() in slirp.c
+                 recv in soread() in socket.c
+ 
+                 When there are data to be received, these functions are called:
+                 tcp_output in slirp_select_poll in slirp.c
+                 ip_output
+                 if_output
+                 if_encap
+                 slirp_output
+                 slirp_fd_read
+                 ne2000_receive
+                 Then they are sent to NE2000. It seems that data is outputed to QEMU
+                 by SLIRP, though they are input data to the program.
+ 
+                 Sockets can be closed by this:
+                 tcp_close in tcp_subr.c
+ 
+                 struct socket in socket.h has data of a socket descriptor and socket state (so_st    ate) etc.
+                 It holds state of connection.
+                 For UDP/IP, it is easier. It probably works if TCP/IP works. It changes functions     depending on TCP or UDP.
+          *///GemDroid end "comments"
+
+      //GemDroid adds
+          //Network - Receive a packet from some destination at the DRAM http://www.h7.dion.ne.jp/    ~qemu-win/HowToNetwork-en.html#internal
+ 
+          if(IP_tracer)
+      {
+              printf("NW-IN-W: 0 %zu\n",m->m_size);
+              cpu_inst_print_flag = true;
+      }
+      //GemDroid ends
+
 	if ((u_int16_t)ip->ip_len <= IF_MTU) {
 		ip->ip_len = htons((u_int16_t)ip->ip_len);
 		ip->ip_off = htons((u_int16_t)ip->ip_off);

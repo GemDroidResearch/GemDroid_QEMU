@@ -459,26 +459,25 @@ uint32_t HELPER(ror_cc)(CPUARMState *env, uint32_t x, uint32_t i)
 
 void HELPER(neon_vldst_all)(CPUARMState *env, uint32_t insn)
 {
-//pras added the "req" argument
 #if defined(CONFIG_USER_ONLY)
-#define LDB(addr, req) ldub(addr, req)
-#define LDW(addr, req) lduw(addr, req)
-#define LDL(addr, req) ldl(addr, req)
-#define LDQ(addr, req) ldq(addr, req)
-#define STB(addr, val, req) stb(addr, val, req)
-#define STW(addr, val, req) stw(addr, val, req)
-#define STL(addr, val, req) stl(addr, val, req)
-#define STQ(addr, val, req) stq(addr, val, req)
+#define LDB(addr) ldub(addr)
+#define LDW(addr) lduw(addr)
+#define LDL(addr) ldl(addr)
+#define LDQ(addr) ldq(addr)
+#define STB(addr, val) stb(addr, val)
+#define STW(addr, val) stw(addr, val)
+#define STL(addr, val) stl(addr, val)
+#define STQ(addr, val) stq(addr, val)
 #else
     int user = cpu_mmu_index(env);
-#define LDB(addr, req) helper_ldb_mmu(env, addr, user, req)
-#define LDW(addr, req) helper_le_lduw_mmu(env, addr, user, GETPC(), req)
-#define LDL(addr, req) helper_le_ldul_mmu(env, addr, user, GETPC(), req)
-#define LDQ(addr, req) helper_le_ldq_mmu(env, addr, user, GETPC(), req)
-#define STB(addr, val, req) helper_stb_mmu(env, addr, val, user, req)
-#define STW(addr, val, req) helper_le_stw_mmu(env, addr, val, user, GETPC(), req)
-#define STL(addr, val, req) helper_le_stl_mmu(env, addr, val, user, GETPC(), req)
-#define STQ(addr, val, req) helper_le_stq_mmu(env, addr, val, user, GETPC(), req)
+#define LDB(addr) helper_ldb_mmu(env, addr, user)
+#define LDW(addr) helper_le_lduw_mmu(env, addr, user, GETPC())
+#define LDL(addr) helper_le_ldul_mmu(env, addr, user, GETPC())
+#define LDQ(addr) helper_le_ldq_mmu(env, addr, user, GETPC())
+#define STB(addr, val) helper_stb_mmu(env, addr, val, user)
+#define STW(addr, val) helper_le_stw_mmu(env, addr, val, user, GETPC())
+#define STL(addr, val) helper_le_stl_mmu(env, addr, val, user, GETPC())
+#define STQ(addr, val) helper_le_stq_mmu(env, addr, val, user, GETPC())
 #endif
     static const struct {
         int nregs;
@@ -520,30 +519,24 @@ void HELPER(neon_vldst_all)(CPUARMState *env, uint32_t insn)
         switch (size) {
             case 3:
                 if (load) {
-                    env->vfp.regs[rd] = make_float64(LDQ(addr, /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID)));
+                    env->vfp.regs[rd] = make_float64(LDQ(addr));
                 } else {
-                    STQ(addr, float64_val(env->vfp.regs[rd]), /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID));
+                    STQ(addr, float64_val(env->vfp.regs[rd]));
                 }
                 addr += stride;
                 break;
             case 2:
                 if (load) {
-					//pras
-					//MEM_REQ_ORIGIN res = (matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID);
-					//if(res <= MEM_REQ_PRINTABLE)
-					//{
-					//	printf("pras: hows: env = %x, matchMeRes = %d, MEM_REQ_ARM_HELPER = %d, MEM_REQ_INVALID = %d\n", env, matchMeInPidTid(env), MEM_REQ_ARM_HELPER, MEM_REQ_INVALID); 
-					//}
-                    tmp64 = (uint32_t)LDL(addr, /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID));
+                    tmp64 = (uint32_t)LDL(addr);
                     addr += stride;
-                    tmp64 |= (uint64_t)LDL(addr, /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID)) << 32;
+                    tmp64 |= (uint64_t)LDL(addr) << 32;
                     addr += stride;
                     env->vfp.regs[rd] = make_float64(tmp64);
                 } else {
                     tmp64 = float64_val(env->vfp.regs[rd]);
-                    STL(addr, tmp64, /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID));
+                    STL(addr, tmp64);
                     addr += stride;
-                    STL(addr, tmp64 >> 32, /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID));
+                    STL(addr, tmp64 >> 32);
                     addr += stride;
                 }
                 break;
@@ -551,13 +544,13 @@ void HELPER(neon_vldst_all)(CPUARMState *env, uint32_t insn)
                 if (load) {
                     tmp64 = 0ull;
                     for (i = 0; i < 4; i++, addr += stride) {
-                        tmp64 |= (uint64_t)LDW(addr, /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID)) << (i * 16);
+                        tmp64 |= (uint64_t)LDW(addr) << (i * 16);
                     }
                     env->vfp.regs[rd] = make_float64(tmp64);
                 } else {
                     tmp64 = float64_val(env->vfp.regs[rd]);
                     for (i = 0; i < 4; i++, addr += stride, tmp64 >>= 16) {
-                        STW(addr, tmp64, /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID));
+                        STW(addr, tmp64);
                     }
                 }
                 break;
@@ -565,13 +558,13 @@ void HELPER(neon_vldst_all)(CPUARMState *env, uint32_t insn)
                 if (load) {
                     tmp64 = 0ull;
                     for (i = 0; i < 8; i++, addr += stride) {
-                        tmp64 |= (uint64_t)LDB(addr, /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID)) << (i * 8);
+                        tmp64 |= (uint64_t)LDB(addr) << (i * 8);
                     }
                     env->vfp.regs[rd] = make_float64(tmp64);
                 } else {
                     tmp64 = float64_val(env->vfp.regs[rd]);
                     for (i = 0; i < 8; i++, addr += stride, tmp64 >>= 8) {
-                        STB(addr, tmp64, /*pras*/(matchMeInPidTid(env)?MEM_REQ_ARM_HELPER:MEM_REQ_INVALID));
+                        STB(addr, tmp64);
                     }
                 }
                 break;

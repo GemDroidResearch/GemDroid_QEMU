@@ -9,21 +9,18 @@
 #ifndef SOFTMMU_SEMI_H
 #define SOFTMMU_SEMI_H 1
 
-//pras
-#include "gemdroid-tracer.h"
-
 static inline uint32_t softmmu_tget32(CPUArchState *env, uint32_t addr)
 {
     uint32_t val;
 
-    cpu_memory_rw_debug(ENV_GET_CPU(env), addr, (uint8_t *)&val, 4, 0, /*pras*/MEM_REQ_SOFT_MMU);
+    cpu_memory_rw_debug(ENV_GET_CPU(env), addr, (uint8_t *)&val, 4, 0);
     return tswap32(val);
 }
 static inline uint32_t softmmu_tget8(CPUArchState *env, uint32_t addr)
 {
     uint8_t val;
 
-    cpu_memory_rw_debug(ENV_GET_CPU(env), addr, &val, 1, 0, /*pras*/MEM_REQ_SOFT_MMU);
+    cpu_memory_rw_debug(ENV_GET_CPU(env), addr, &val, 1, 0);
     return val;
 }
 
@@ -34,7 +31,7 @@ static inline uint32_t softmmu_tget8(CPUArchState *env, uint32_t addr)
 static inline void softmmu_tput32(CPUArchState *env, uint32_t addr, uint32_t val)
 {
     val = tswap32(val);
-    cpu_memory_rw_debug(ENV_GET_CPU(env), addr, (uint8_t *)&val, 4, 1, /*pras*/MEM_REQ_SOFT_MMU);
+    cpu_memory_rw_debug(ENV_GET_CPU(env), addr, (uint8_t *)&val, 4, 1);
 }
 #define put_user_u32(arg, p) ({ softmmu_tput32(env, p, arg) ; 0; })
 #define put_user_ual(arg, p) put_user_u32(arg, p)
@@ -46,7 +43,7 @@ static void *softmmu_lock_user(CPUArchState *env, uint32_t addr, uint32_t len,
     /* TODO: Make this something that isn't fixed size.  */
     p = malloc(len);
     if (p && copy) {
-        cpu_memory_rw_debug(ENV_GET_CPU(env), addr, p, len, 0, /*pras*/MEM_REQ_SOFT_MMU);
+        cpu_memory_rw_debug(ENV_GET_CPU(env), addr, p, len, 0);
     }
     return p;
 }
@@ -62,7 +59,7 @@ static char *softmmu_lock_user_string(CPUArchState *env, uint32_t addr)
         return NULL;
     }
     do {
-        cpu_memory_rw_debug(ENV_GET_CPU(env), addr, &c, 1, 0, /*pras*/MEM_REQ_SOFT_MMU);
+        cpu_memory_rw_debug(ENV_GET_CPU(env), addr, &c, 1, 0);
         addr++;
         *(p++) = c;
     } while (c);
@@ -73,7 +70,7 @@ static void softmmu_unlock_user(CPUArchState *env, void *p, target_ulong addr,
                                 target_ulong len)
 {
     if (len) {
-        cpu_memory_rw_debug(ENV_GET_CPU(env), addr, p, len, 1, /*pras*/MEM_REQ_SOFT_MMU);
+        cpu_memory_rw_debug(ENV_GET_CPU(env), addr, p, len, 1);
     }
     free(p);
 }

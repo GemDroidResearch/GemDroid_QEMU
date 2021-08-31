@@ -480,6 +480,10 @@ struct CPUMIPSState {
     const mips_def_t *cpu_model;
     void *irq[8];
     struct QEMUTimer *timer; /* Internal timer */
+
+    //GemDroid adds - cpu instruction counter
+    unsigned long long cpu_inst_counter;
+    //GemDroid end
 };
 
 #include "cpu-qom.h"

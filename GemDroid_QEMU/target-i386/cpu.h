@@ -856,6 +856,10 @@ typedef struct CPUX86State {
     uint64 mcg_status;
     uint64 mcg_ctl;
     uint64 *mce_banks;
+
+ //GemDroid adds - cpu instruction counter
+ unsigned long long cpu_inst_counter;
+ //GemDroid end
 } CPUX86State;
 
 #include "cpu-qom.h"

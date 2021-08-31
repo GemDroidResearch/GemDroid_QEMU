@@ -128,7 +128,7 @@ static void do_restore_state (CPUMIPSState *env, uintptr_t pc)
 static inline type do_##name(CPUMIPSState *env, target_ulong addr,      \
                              int mem_idx)                               \
 {                                                                       \
-    return (type) cpu_##insn##_raw(env, addr, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED);                                     \
+    return (type) cpu_##insn##_raw(env, addr);                                     \
 }
 #else
 #define HELPER_LD(name, insn, type)                                     \
@@ -137,10 +137,10 @@ static inline type do_##name(CPUMIPSState *env, target_ulong addr,      \
 {                                                                       \
     switch (mem_idx)                                                    \
     {                                                                   \
-    case 0: return (type) cpu_##insn##_kernel(env, addr, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED); break;        \
-    case 1: return (type) cpu_##insn##_super(env, addr, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED); break;         \
+    case 0: return (type) cpu_##insn##_kernel(env, addr); break;        \
+    case 1: return (type) cpu_##insn##_super(env, addr); break;         \
     default:                                                            \
-    case 2: return (type) cpu_##insn##_user(env, addr, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED); break;          \
+    case 2: return (type) cpu_##insn##_user(env, addr); break;          \
     }                                                                   \
 }
 #endif
@@ -156,7 +156,7 @@ HELPER_LD(ld, ldq, int64_t)
 static inline void do_##name(CPUMIPSState *env, target_ulong addr,      \
                              type val, int mem_idx)                     \
 {                                                                       \
-    cpu_##insn##_raw(env, addr, val, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED);                                              \
+    cpu_##insn##_raw(env, addr, val);                                              \
 }
 #else
 #define HELPER_ST(name, insn, type)                                     \
@@ -165,10 +165,10 @@ static inline void do_##name(CPUMIPSState *env, target_ulong addr,      \
 {                                                                       \
     switch (mem_idx)                                                    \
     {                                                                   \
-    case 0: cpu_##insn##_kernel(env, addr, val, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED); break;                 \
-    case 1: cpu_##insn##_super(env, addr, val, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED); break;                  \
+    case 0: cpu_##insn##_kernel(env, addr, val); break;                 \
+    case 1: cpu_##insn##_super(env, addr, val); break;                  \
     default:                                                            \
-    case 2: cpu_##insn##_user(env, addr, val, /*pras*/OTHER_TARGET_NOT_IMPLEMENTED); break;                   \
+    case 2: cpu_##insn##_user(env, addr, val); break;                   \
     }                                                                   \
 }
 #endif

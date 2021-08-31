@@ -1,0 +1,714 @@
+[1mdiff --git a/Makefile.android b/Makefile.android[m
+[1mindex abebaae..9ef2d4c 100644[m
+[1m--- a/Makefile.android[m
+[1m+++ b/Makefile.android[m
+[36m@@ -258,7 +258,7 @@[m [mendef[m
+ [m
+ # The common libraries[m
+ #[m
+[31m-QEMU_SYSTEM_LDLIBS := -lm[m
+[32m+[m[32mQEMU_SYSTEM_LDLIBS := -lm -L./d4-7 -ld4 -L./d4-7-64bit -ld4-64[m
+ ifeq ($(HOST_OS),windows)[m
+   QEMU_SYSTEM_LDLIBS += -mwindows -mconsole[m
+ endif[m
+[1mdiff --git a/Makefile.target b/Makefile.target[m
+[1mindex 67d355c..1f4bb8e 100644[m
+[1m--- a/Makefile.target[m
+[1m+++ b/Makefile.target[m
+[36m@@ -156,6 +156,7 @@[m [mcommon_LOCAL_SRC_FILES += \[m
+     backends/msmouse.c \[m
+     cpu-exec.c  \[m
+     cputlb.c \[m
+[32m+[m[32m    gemdroid-tracer.c \[m
+     exec.c \[m
+     main-loop.c \[m
+     memory-android.c \[m
+[1mdiff --git a/android/camera/camera-service.c b/android/camera/camera-service.c[m
+[1mindex 2d0e9dd..3a13990 100644[m
+[1m--- a/android/camera/camera-service.c[m
+[1m+++ b/android/camera/camera-service.c[m
+[36m@@ -18,6 +18,11 @@[m
+  * Contains emulated camera service implementation.[m
+  */[m
+ [m
+[32m+[m[32m//GemDroid added[m
+[32m+[m[32m//For GemDroid Tracer Functionality[m
+[32m+[m[32m#include "gemdroid-tracer.h"[m
+[32m+[m[32m//GemDroid end[m
+[32m+[m
+ #include "qemu-common.h"[m
+ #include "android/globals.h"  /* for android_hw */[m
+ #include "android/hw-qemud.h"[m
+[1mdiff --git a/android/skin/window.c b/android/skin/window.c[m
+[1mindex 8178ac3..391102d 100644[m
+[1m--- a/android/skin/window.c[m
+[1m+++ b/android/skin/window.c[m
+[36m@@ -25,6 +25,11 @@[m
+ #include <stdio.h>[m
+ #include <stdlib.h>[m
+ [m
+[32m+[m[32m//GemDroid added[m
+[32m+[m[32m//For GemDroid Tracer Functionality[m
+[32m+[m[32m#include "gemdroid-tracer.h"[m
+[32m+[m[32m//GemDroid end[m
+[32m+[m
+ /* when shrinking, we reduce the pixel ratio by this fixed amount */[m
+ #define  SHRINK_SCALE  0.6[m
+ [m
+[1mdiff --git a/cpu-exec.c b/cpu-exec.c[m
+[1mindex 81a7d85..db9cf78 100644[m
+[1m--- a/cpu-exec.c[m
+[1m+++ b/cpu-exec.c[m
+[36m@@ -24,6 +24,11 @@[m
+ #include "exec/hax.h"[m
+ #include "qemu/atomic.h"[m
+ [m
+[32m+[m[32m//GemDroid added[m
+[32m+[m[32m//For GemDroid Tracer Functionality[m
+[32m+[m[32m#include "gemdroid-tracer.h"[m
+[32m+[m[32m//GemDroid end[m
+[32m+[m
+ #if !defined(CONFIG_SOFTMMU)[m
+ #undef EAX[m
+ #undef ECX[m
+[1mdiff --git a/cpus.c b/cpus.c[m
+[1mindex f97720a..9707ed7 100644[m
+[1m--- a/cpus.c[m
+[1m+++ b/cpus.c[m
+[36m@@ -36,6 +36,13 @@[m
+ [m
+ #include "sysemu/cpus.h"[m
+ [m
+[32m+[m
+[32m+[m[32m//GemDroid added[m
+[32m+[m[32m//For GemDroid Tracer Functionality[m
+[32m+[m[32m#include "gemdroid-tracer.h"[m
+[32m+[m[32m//GemDroid end[m
+[32m+[m
+[32m+[m
+ static CPUState *cur_cpu;[m
+ static CPUState *next_cpu;[m
+ [m
+[1mdiff --git a/disas.c b/disas.c[m
+[1mindex 7ce215c..fd408d7 100644[m
+[1m--- a/disas.c[m
+[1m+++ b/disas.c[m
+[36m@@ -7,6 +7,13 @@[m
+ #include "cpu.h"[m
+ #include "disas/disas.h"[m
+ [m
+[32m+[m
+[32m+[m[32m//GemDroid added[m
+[32m+[m[32m//For GemDroid Tracer Functionality[m
+[32m+[m[32m#include "gemdroid-tracer.h"[m
+[32m+[m[32m//GemDroid end[m
+[32m+[m
+[32m+[m
+ typedef struct CPUDebug {[m
+     struct disassemble_info info;[m
+     CPUArchState *env;[m
+[1mdiff --git a/hw/android/goldfish/audio.c b/hw/android/goldfish/audio.c[m
+[1mindex 9d15b8c..d7be7ed 100644[m
+[1m--- a/hw/android/goldfish/audio.c[m
+[1m+++ b/hw/android/goldfish/audio.c[m
+[36m@@ -17,6 +17,12 @@[m
+ #include "android/qemu-debug.h"[m
+ #include "android/globals.h"[m
+ [m
+[32m+[m[32m//GemDroid added[m
+[32m+[m[32m//For GemDroid Tracer Functionality[m
+[32m+[m[32m#include "gemdroid-tracer.h"[m
+[32m+[m[32m//GemDroid end[m
+[32m+[m
+[32m+[m
+ #define  DEBUG  1[m
+ [m
+ #if DEBUG[m
+[1mdiff --git a/hw/android/goldfish/fb.c b/hw/android/goldfish/fb.c[m
+[1mindex bbb392a..c6e8cd5 100644[m
+[1m--- a/hw/android/goldfish/fb.c[m
+[1m+++ b/hw/android/goldfish/fb.c[m
+[36m@@ -19,6 +19,12 @@[m
+ #include "hw/hw.h"[m
+ #include "ui/console.h"[m
+ [m
+[32m+[m[32m//GemDroid added[m
+[32m+[m[32m//For GemDroid Tracer Functionality[m
+[32m+[m[32m#include "gemdroid-tracer.h"[m
+[32m+[m[32m//GemDroid end[m
+[32m+[m
+[32m+[m
+ /* These values *must* match the platform definitions found under[m
+  * hardware/libhardware/include/hardware/hardware.h[m
+  */[m
+[1mdiff --git a/hw/android/goldfish/trace.c b/hw/android/goldfish/trace.c[m
+[1mindex 250c07c..eef3e75 100644[m
+[1m--- a/hw/android/goldfish/trace.c[m
+[1m+++ b/hw/android/goldfish/trace.c[m
+[36m@@ -21,6 +21,13 @@[m
+ #include "exec/softmmu_exec.h"[m
+ #include "exec/code-profile.h"[m
+ [m
+[32m+[m
+[32m+[m[32m//GemDroid added[m
+[32m+[m[32m//For GemDroid Tracer Functionality[m
+[32m+[m[32m#include "gemdroid-tracer.h"[m
+[32m+[m[32m//GemDroid end[m
+[32m+[m
+[32m+[m
+ /* Set to 1 to debug tracing */[m
+ #define DEBUG   0[m
+ [m
+[1mdiff --git a/include/exec/softmmu_template.h b/include/exec/softmmu_template.h[m
+[1mindex 5ddf5ae..9225906 100644[m
+[1m--- a/include/exec/softmmu_template.h[m
+[1m+++ b/include/exec/softmmu_template.h[m
+[36m@@ -21,6 +21,12 @@[m
+  * You should have received a copy of the GNU Lesser General Public[m
+  * License along with this library; if not, see <http://www.gnu.org/licenses/>.[m
+  */[m
+[32m+[m
+[32m+[m[32m//GemDroid added[m
+[32m+[m[32m//For GemDroid Tracer Functionality[m
+[32m+[m[32m#include "gemdroid-tracer.h"[m
+[32m+[m[32m//GemDroid end[m
+[32m+[m
+ #include "qemu/timer.h"[m
+ [m
+ #define DATA_SIZE (1 << SHIFT)[m
+[36m@@ -155,6 +161,14 @@[m [mWORD_TYPE helper_le_ld_name(CPUArchState *env, target_ulong addr, int mmu_idx,[m
+     /* Adjust the given return address.  */[m
+     retaddr -= GETPC_ADJ;[m
+ [m
+[32m+[m
+[32m+[m[32m    // GemDroid adds - print tick[m
+[32m+[m[32m    //printf("MS: %ld\n", cpu_get_ticks()/1000 - last_ticks);[m
+[32m+[m[32m    printf("MS: %" PRId64 "\n", cpu_get_ticks()/1000 - last_ticks);[m
+[32m+[m[32m    last_ticks = cpu_get_ticks()/1000;[m
+[32m+[m[32m    timer_print_flag = false;[m
+[32m+[m[32m    // GemDroid ends[m
+[32m+[m[41m    [m
+     /* If the TLB entry is for a different page, reload and try again.  */[m
+     if ((addr & TARGET_PAGE_MASK)[m
+          != (tlb_addr & (TARGET_PAGE_MASK | TLB_INVALID_MASK))) {[m
+[36m@@ -175,6 +189,15 @@[m [mWORD_TYPE helper_le_ld_name(CPUArchState *env, target_ulong addr, int mmu_idx,[m
+         }[m
+         ioaddr = env->iotlb[mmu_idx][index];[m
+ [m
+[32m+[m[32m        //GemDroid Added[m
+[32m+[m[32m            //printf("IO ld %x %d\n",addr, DATA_SIZE);[m
+[32m+[m[32m            printf("IO ld %u %d\n",(uint32_t)addr, DATA_SIZE);[m
+[32m+[m[32m            IO_ld+=DATA_SIZE;[m
+[32m+[m[32m            cpu_cycles+=DRAM_latency;[m
+[32m+[m[32m            timer_print_flag = true;[m
+[32m+[m[32m            cpu_inst_print_flag = false;[m
+[32m+[m[32m        //GemDroid end[m
+[32m+[m
+         /* ??? Note that the io helpers always read data in the target[m
+            byte ordering.  We should push the LE/BE request down into io.  */[m
+         res = glue(io_read, SUFFIX)(env, ioaddr, addr, retaddr);[m
+[36m@@ -193,6 +216,40 @@[m [mWORD_TYPE helper_le_ld_name(CPUArchState *env, target_ulong addr, int mmu_idx,[m
+ #ifdef ALIGNED_ONLY[m
+         do_unaligned_access(env, addr, READ_ACCESS_TYPE, mmu_idx, retaddr);[m
+ #endif[m
+[32m+[m
+[32m+[m[32m//          //GemDroid Added[m
+[32m+[m[32m//                miss_status = check_miss(addr, DATA_SIZE,READ_ACCESS);[m
+[32m+[m[32m//              if(miss_status)   //if miss, print address[m
+[32m+[m[32m//                          {[m
+[32m+[m[32m//                          mmu1_ld+=DATA_SIZE;[m
+[32m+[m[32m//                          if(miss_status == 2)// A L2 miss[m
+[32m+[m[32m//                          {[m
+[32m+[m[32m//                  int64_t curr_ticks = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);[m
+[32m+[m[32m//                  int64_t diff_ticks =  curr_ticks - curr_gemdroid_tick;[m
+[32m+[m[32m//                  curr_gemdroid_tick = curr_ticks;[m
+[32m+[m[32m//[m
+[32m+[m[32m//                  //        printf("CPU %llu ", env->cpu_inst_counter);[m
+[32m+[m[32m//                  printf("%" PRId64  "\n",diff_ticks);[m
+[32m+[m[32m//                          // printf("total_insts %llu \n",new_total_insts);[m
+[32m+[m[32m//                          //new_total_insts = 0;[m
+[32m+[m[32m//                          //env->cpu_inst_counter = 0;[m
+[32m+[m[32m//                          uint32_t phys_addr = cpu_get_phys_page_debug(env, addr);[m
+[32m+[m[32m//                          printf("MMU_ld %x %d\n", phys_addr, DATA_SIZE);[m
+[32m+[m[32m//                          cpu_cycles+=DRAM_latency;[m
+[32m+[m[32m//                          }[m
+[32m+[m[32m//                          else if(miss_status == 1) // A L1 miss[m
+[32m+[m[32m//                          {[m
+[32m+[m[32m//                             cpu_cycles+=8;[m
+[32m+[m[32m//                          }[m
+[32m+[m[32m//                          timer_print_flag = true;[m
+[32m+[m[32m//                          cpu_inst_print_flag = false;[m
+[32m+[m[32m//                  }[m
+[32m+[m[32m//  //             else[m
+[32m+[m[32m//  //                     printf("\n HIT");[m
+[32m+[m[32m//[m
+[32m+[m[32m//          //GemDroid end[m
+[32m+[m
+[32m+[m
+         addr1 = addr & ~(DATA_SIZE - 1);[m
+         addr2 = addr1 + DATA_SIZE;[m
+         /* Note the adjustment at the beginning of the function.[m
+[36m@@ -214,6 +271,41 @@[m [mWORD_TYPE helper_le_ld_name(CPUArchState *env, target_ulong addr, int mmu_idx,[m
+ #endif[m
+ [m
+     haddr = addr + env->tlb_table[mmu_idx][index].addend;[m
+[32m+[m
+[32m+[m[32m//          //GemDroid Added[m
+[32m+[m[32m//          miss_status = check_miss(addr, DATA_SIZE,READ_ACCESS);[m
+[32m+[m[32m//          if(miss_status)   //if miss, print address[m
+[32m+[m[32m//                  {[m
+[32m+[m[32m//                  mmu2_ld+=DATA_SIZE;[m
+[32m+[m[32m//                          if(miss_status == 2)[m
+[32m+[m[32m//                          {[m
+[32m+[m[32m//                  int64_t curr_ticks = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);[m
+[32m+[m[32m//                  int64_t diff_ticks =  curr_ticks - curr_gemdroid_tick;[m
+[32m+[m[32m//                  curr_gemdroid_tick = curr_ticks;[m
+[32m+[m[32m//[m
+[32m+[m[32m//                          //printf("CPU %llu ", env->cpu_inst_counter);[m
+[32m+[m[32m//                  printf("%" PRId64  "\n",diff_ticks);[m
+[32m+[m[32m//[m
+[32m+[m[32m//                                 // env->cpu_inst_counter = 0;[m
+[32m+[m[32m//                                  // printf("total_insts %llu \n",new_total_insts);[m
+[32m+[m[32m//                                  //new_total_insts = 0;[m
+[32m+[m[32m//                                  uint32_t phys_addr = cpu_get_phys_page_debug(env, addr);[m
+[32m+[m[32m//                                  printf("MMU_ld %x %d\n", phys_addr, DATA_SIZE);[m
+[32m+[m[32m//                                  cpu_cycles+=DRAM_latency;[m
+[32m+[m[32m//                          }[m
+[32m+[m[32m//                          else if(miss_status == 1)[m
+[32m+[m[32m//                          {[m
+[32m+[m[32m//                          cpu_cycles+=8;[m
+[32m+[m[32m//                          }[m
+[32m+[m[32m//[m
+[32m+[m[32m//                          timer_print_flag = true;[m
+[32m+[m[32m//                          cpu_inst_print_flag = false;[m
+[32m+[m[32m//                  }[m
+[32m+[m[32m//          //else[m
+[32m+[m[32m//          //printf("\n HIT");[m
+[32m+[m[32m//       //GemDroid end[m
+[32m+[m
+[32m+[m
+ #if DATA_SIZE == 1[m
+     res = glue(glue(ld, LSUFFIX), _p)((uint8_t *)haddr);[m
+ #else[m
+[36m@@ -234,6 +326,13 @@[m [mWORD_TYPE helper_be_ld_name(CPUArchState *env, target_ulong addr, int mmu_idx,[m
+     uintptr_t haddr;[m
+     DATA_TYPE res;[m
+ [m
+[32m+[m[32m      // GemDroid adds - print tick[m
+[32m+[m[32m      //printf("MS: %ld\n", cpu_get_ticks()/1000 - last_ticks);[m
+[32m+[m[32m      printf("MS: %" PRId64 "\n", cpu_get_ticks()/1000 - last_ticks);[m
+[32m+[m[32m         last_ticks = cpu_get_ticks()/1000;[m
+[32m+[m[32m         timer_print_flag = false;[m
+[32m+[m[32m      //GemDroid end[m
+[32m+[m
+     /* Adjust the given return address.  */[m
+     retaddr -= GETPC_ADJ;[m
+ [m
+[36m@@ -257,6 +356,16 @@[m [mWORD_TYPE helper_be_ld_name(CPUArchState *env, target_ulong addr, int mmu_idx,[m
+         }[m
+         ioaddr = env->iotlb[mmu_idx][index];[m
+ [m
+[32m+[m
+[32m+[m[32m          //GemDroid Added[m
+[32m+[m[32m          //printf("IO ld %x %d\n",addr, DATA_SIZE);[m
+[32m+[m[32m          printf("IO ld %u %d\n",(uint32_t)addr, DATA_SIZE);[m
+[32m+[m	[32m  IO_ld+=DATA_SIZE;[m
+[32m+[m[32m          cpu_cycles+=DRAM_latency;[m
+[32m+[m[32m          timer_print_flag = true;[m
+[32m+[m[32m          cpu_inst_print_flag = false;[m
+[32m+[m[32m           //GemDroid end[m
+[32m+[m
+         /* ??? Note that the io helpers always read data in the target[m
+            byte ordering.  We should push the LE/BE request down into io.  */[m
+         res = glue(io_read, SUFFIX)(env, ioaddr, addr, retaddr);[m
+[36m@@ -275,6 +384,41 @@[m [mWORD_TYPE helper_be_ld_name(CPUArchState *env, target_ulong addr, int mmu_idx,[m
+ #ifdef ALIGNED_ONLY[m
+         do_unaligned_access(env, addr, READ_ACCESS_TYPE, mmu_idx, retaddr);[m
+ #endif[m
+[32m+[m
+[32m+[m[32m//          //GemDroid Added[m
+[32m+[m[32m//                miss_status = check_miss(addr, DATA_SIZE,READ_ACCESS);[m
+[32m+[m[32m//              if(miss_status)   //if miss, print address[m
+[32m+[m[32m//                          {[m
+[32m+[m[32m//                          mmu1_ld+=DATA_SIZE;[m
+[32m+[m[32m//                          if(miss_status == 2)// A L2 miss[m
+[32m+[m[32m//                          {[m
+[32m+[m[32m//                  int64_t curr_ticks = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);[m
+[32m+[m[32m//                  int64_t diff_ticks =  curr_ticks - curr_gemdroid_tick;[m
+[32m+[m[32m//                  curr_gemdroid_tick = curr_ticks;[m
+[32m+[m[32m//[m
+[32m+[m[32m//                  //        printf("CPU %llu ", env->cpu_inst_counter);[m
+[32m+[m[32m//                  printf("%" PRId64  "\n",diff_ticks);[m
+[32m+[m[32m//                          // printf("total_insts %llu \n",new_total_insts);[m
+[32m+[m[32m//                          //new_total_insts = 0;[m
+[32m+[m[32m//                          //env->cpu_inst_counter = 0;[m
+[32m+[m[32m//                          uint32_t phys_addr = cpu_get_phys_page_debug(env, addr);[m
+[32m+[m[32m//                          printf("MMU_ld %x %d\n", phys_addr, DATA_SIZE);[m
+[32m+[m[32m//                          cpu_cycles+=DRAM_latency;[m
+[32m+[m[32m//                          }[m
+[32m+[m[32m//                          else if(miss_status == 1) // A L1 miss[m
+[32m+[m[32m//                          {[m
+[32m+[m[32m//                             cpu_cycles+=8;[m
+[32m+[m[32m//                          }[m
+[32m+[m[32m//                          timer_print_flag = true;[m
+[32m+[m[32m//                          cpu_inst_print_flag = false;[m
+[32m+[m[32m//                  }[m
+[32m+[m[32m//  //             else[m
+[32m+[m[32m//  //                     printf("\n HIT");[m
+[32m+[m[32m//[m
+[32m+[m[32m//          //GemDroid end[m
+[32m+[m
+[32m+[m
+[32m+[m
+         addr1 = addr & ~(DATA_SIZE - 1);[m
+         addr2 = addr1 + DATA_SIZE;[m
+         /* Note the adjustment at the beginning of the function.[m
+[36m@@ -295,6 +439,41 @@[m [mWORD_TYPE helper_be_ld_name(CPUArchState *env, target_ulong addr, int mmu_idx,[m
+     }[m
+ #endif[m
+ [m
+[32m+[m[32m//          //GemDroid Added[m
+[32m+[m[32m//          miss_status = check_miss(addr, DATA_SIZE,READ_ACCESS);[m
+[32m+[m[32m//          if(miss_status)   //if miss, print address[m
+[32m+[m[32m//                  {[m
+[32m+[m[32m//                  mmu2_ld+=DATA_SIZE;[m
+[32m+[m[32m//                          if(miss_status == 2)[m
+[32m+[m[32m//                          {[m
+[32m+[m[32m//                  int64_t curr_ticks = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);[m
+[32m+[m[32m//                  int64_t diff_ticks =  curr_ticks - curr_gemdroid_tick;[m
+[32m+[m[32m//                  curr_gemdroid_tick = curr_ticks;[m
+[32m+[m[32m//[m
+[32m+[m[32m//                          //printf("CPU %llu ", env->cpu_inst_counter);[m
+[32m+[m[32m//                  printf("%" PRId64  "\n",diff_ticks);[m
+[32m+[m[32m//[m
+[32m+[m[32m//                                 // env->cpu_inst_counter = 0;[m
+[32m+[m[32m//                                  // printf("total_insts %llu \n",new_total_insts);[m
+[32m+[m[32m//                                  //new_total_insts = 0;[m
+[32m+[m[32m//                                  uint32_t phys_addr = cpu_get_phys_page_debug(env, addr);[m
+[32m+[m[32m//                                  printf("MMU_ld %x %d\n", phys_addr, DATA_SIZE);[m
+[32m+[m[32m//                                  cpu_cycles+=DRAM_latency;[m
+[32m+[m[32m//                          }[m
+[32m+[m[32m//                          else if(miss_status == 1)[m
+[32m+[m[32m//                          {[m
+[32m+[m[32m//                          cpu_cycles+=8;[m
+[32m+[m[32m//                          }[m
+[32m+[m[32m//[m
+[32m+[m[32m//                          timer_print_flag = true;[m
+[32m+[m[32m//                          cpu_inst_print_flag = false;[m
+[32m+[m[32m//                  }[m
+[32m+[m[32m//          //else[m
+[32m+[m[32m//          //printf("\n HIT");[m
+[32m+[m[32m//       //GemDroid end[m
+[32m+[m
+[32m+[m
+[32m+[m
+     haddr = addr + env->tlb_table[mmu_idx][index].addend;[m
+     res = glue(glue(ld, LSUFFIX), _be_p)((uint8_t *)haddr);[m
+     return res;[m
+[36m@@ -363,6 +542,14 @@[m [mvoid helper_le_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,[m
+     target_ulong tlb_addr = env->tlb_table[mmu_idx][index].addr_write;[m
+     uintptr_t haddr;[m
+ [m
+[32m+[m[32m      //GemDroid Added[m
+[32m+[m[32m      //print tick[m
+[32m+[m[32m       //printf("MS: %ld\n", cpu_get_ticks()/1000 - last_ticks);[m
+[32m+[m[32m       printf("MS: %" PRId64 "\n", cpu_get_ticks()/1000 - last_ticks);[m
+[32m+[m[32m       last_ticks = cpu_get_ticks()/1000;[m
+[32m+[m[32m       timer_print_flag = false;[m
+[32m+[m[32m       //GemDroid End[m
+[32m+[m
+     /* Adjust the given return address.  */[m
+     retaddr -= GETPC_ADJ;[m
+ [m
+[36m@@ -386,6 +573,17 @@[m [mvoid helper_le_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,[m
+         }[m
+         ioaddr = env->iotlb[mmu_idx][index];[m
+ [m
+[32m+[m[32m          //GemDroid Added[m
+[32m+[m[32m                  //printf("IO st %x %d\n",addr, DATA_SIZE);[m
+[32m+[m[32m                  printf("IO ld %u %d\n",(uint32_t)addr, DATA_SIZE);[m
+[32m+[m[32m                  IO_st+=DATA_SIZE;[m
+[32m+[m[32m                  cpu_cycles+=DRAM_latency;[m
+[32m+[m[32m                  timer_print_flag = true;[m
+[32m+[m[32m                  cpu_inst_print_flag = false;[m
+[32m+[m[32m          //GemDroid End[m
+[32m+[m
+[32m+[m
+[32m+[m
+         /* ??? Note that the io helpers always read data in the target[m
+            byte ordering.  We should push the LE/BE request down into io.  */[m
+         val = TGT_LE(val);[m
+[36m@@ -402,6 +600,37 @@[m [mvoid helper_le_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,[m
+ #ifdef ALIGNED_ONLY[m
+         do_unaligned_access(env, addr, 1, mmu_idx, retaddr);[m
+ #endif[m
+[32m+[m
+[32m+[m
+[32m+[m[32m//          //GemDroid Added[m
+[32m+[m[32m//          miss_status = check_miss(addr, DATA_SIZE,WRITE_ACCESS);[m
+[32m+[m[32m//          if(miss_status)   //if miss, print address[m
+[32m+[m[32m//          {[m
+[32m+[m[32m//                  mmu1_st+=DATA_SIZE;[m
+[32m+[m[32m//                  if(miss_status == 2)[m
+[32m+[m[32m//                  {[m
+[32m+[m[32m//                    int64_t curr_ticks = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);[m
+[32m+[m[32m//                    int64_t diff_ticks =  curr_ticks - curr_gemdroid_tick;[m
+[32m+[m[32m//                    curr_gemdroid_tick = curr_ticks;[m
+[32m+[m[32m//[m
+[32m+[m[32m//                    //printf("CPU %llu ", env->cpu_inst_counter);[m
+[32m+[m[32m//                    printf("%" PRId64  "\n",diff_ticks);[m
+[32m+[m[32m//                    // env->cpu_inst_counter = 0;[m
+[32m+[m[32m//                    // printf("total_insts %llu \n",new_total_insts);[m
+[32m+[m[32m//                    //new_total_insts = 0;[m
+[32m+[m[32m//                    uint32_t phys_addr = cpu_get_phys_page_debug(env, addr);[m
+[32m+[m[32m//                    printf("MMU_st %x %d\n",phys_addr, DATA_SIZE);[m
+[32m+[m[32m//                    cpu_cycles+=DRAM_latency;[m
+[32m+[m[32m//                   }[m
+[32m+[m[32m//                   else if(miss_status == 1)[m
+[32m+[m[32m//                   {[m
+[32m+[m[32m//                              cpu_cycles+=8;[m
+[32m+[m[32m//                   }[m
+[32m+[m[32m//                   timer_print_flag = true;[m
+[32m+[m[32m//                   cpu_inst_print_flag = false;[m
+[32m+[m[32m//           }[m
+[32m+[m[32m//          //GemDroid End[m
+[32m+[m
+         /* XXX: not efficient, but simple */[m
+         /* Note: relies on the fact that tlb_fill() does not remove the[m
+          * previous page from the TLB cache.  */[m
+[36m@@ -423,6 +652,39 @@[m [mvoid helper_le_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,[m
+     }[m
+ #endif[m
+ [m
+[32m+[m[32m//      //GemDroid Added[m
+[32m+[m[32m//                  miss_status = check_miss(addr, DATA_SIZE,WRITE_ACCESS);[m
+[32m+[m[32m//                  if(miss_status)   //if miss, print address[m
+[32m+[m[32m//                  {[m
+[32m+[m[32m//                          mmu2_st+=DATA_SIZE;[m
+[32m+[m[32m//                          if(miss_status == 2)[m
+[32m+[m[32m//                          {[m
+[32m+[m[32m//              int64_t curr_ticks = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);[m
+[32m+[m[32m//              int64_t diff_ticks =  curr_ticks - curr_gemdroid_tick;[m
+[32m+[m[32m//              curr_gemdroid_tick = curr_ticks;[m
+[32m+[m[32m//[m
+[32m+[m[32m//              //printf("CPU %llu ", env->cpu_inst_counter);[m
+[32m+[m[32m//              printf("%" PRId64  "\n",diff_ticks);[m
+[32m+[m[32m//[m
+[32m+[m[32m//                         // total_insts += env->cpu_inst_counter;[m
+[32m+[m[32m//                          //env->cpu_inst_counter = 0;[m
+[32m+[m[32m//                  // printf("total_insts %llu \n",new_total_insts);[m
+[32m+[m[32m//                          //new_total_insts = 0;[m
+[32m+[m[32m//                          uint32_t phys_addr = cpu_get_phys_page_debug(env, addr);[m
+[32m+[m[32m//                          printf("MMU_st %x %d\n",phys_addr, DATA_SIZE);[m
+[32m+[m[32m//                          cpu_cycles+=DRAM_latency;[m
+[32m+[m[32m//                          }[m
+[32m+[m[32m//                          else if(miss_status == 1)[m
+[32m+[m[32m//                          {[m
+[32m+[m[32m//                                  cpu_cycles+=8;[m
+[32m+[m[32m//                          }[m
+[32m+[m[32m//                          timer_print_flag = true;[m
+[32m+[m[32m//                          cpu_inst_print_flag = false;[m
+[32m+[m[32m//                  }[m
+[32m+[m[32m//      //GemDroid End[m
+[32m+[m
+[32m+[m
+[32m+[m
+     haddr = addr + env->tlb_table[mmu_idx][index].addend;[m
+ #if DATA_SIZE == 1[m
+     glue(glue(st, SUFFIX), _p)((uint8_t *)haddr, val);[m
+[36m@@ -442,6 +704,16 @@[m [mvoid helper_be_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,[m
+     /* Adjust the given return address.  */[m
+     retaddr -= GETPC_ADJ;[m
+ [m
+[32m+[m[32m      //GemDroid Added[m
+[32m+[m[32m      //print tick[m
+[32m+[m[32m         //printf("MS: %ld\n", cpu_get_ticks()/1000 - last_ticks);[m
+[32m+[m[32m         printf("MS: %" PRId64 "\n", cpu_get_ticks()/1000 - last_ticks);[m
+[32m+[m[32m         last_ticks = cpu_get_ticks()/1000;[m
+[32m+[m[32m         timer_print_flag = false;[m
+[32m+[m[32m       //GemDroid End[m
+[32m+[m
+[32m+[m
+[32m+[m
+     /* If the TLB entry is for a different page, reload and try again.  */[m
+     if ((addr & TARGET_PAGE_MASK)[m
+         != (tlb_addr & (TARGET_PAGE_MASK | TLB_INVALID_MASK))) {[m
+[36m@@ -462,6 +734,16 @@[m [mvoid helper_be_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,[m
+         }[m
+         ioaddr = env->iotlb[mmu_idx][index];[m
+ [m
+[32m+[m[32m          //GemDroid Added[m
+[32m+[m[32m                  //printf("IO st %x %d\n",addr, DATA_SIZE);[m
+[32m+[m		[32m  printf("IO ld %u %d\n",(uint32_t)addr, DATA_SIZE);[m
+[32m+[m[32m                  IO_st+=DATA_SIZE;[m
+[32m+[m[32m                  cpu_cycles+=DRAM_latency;[m
+[32m+[m[32m                  timer_print_flag = true;[m
+[32m+[m[32m                  cpu_inst_print_flag = false;[m
+[32m+[m[32m          //GemDroid End[m
+[32m+[m
+[32m+[m
+         /* ??? Note that the io helpers always read data in the target[m
+            byte ordering.  We should push the LE/BE request down into io.  */[m
+         val = TGT_BE(val);[m
+[36m@@ -478,6 +760,37 @@[m [mvoid helper_be_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,[m
+ #ifdef ALIGNED_ONLY[m
+         do_unaligned_access(env, addr, 1, mmu_idx, retaddr);[m
+ #endif[m
+[32m+[m
+[32m+[m
+[32m+[m[32m//          //GemDroid Added[m
+[32m+[m[32m//                          miss_status = check_miss(addr, DATA_SIZE,WRITE_ACCESS);[m
+[32m+[m[32m//                          if(miss_status)   //if miss, print address[m
+[32m+[m[32m//                          {[m
+[32m+[m[32m//                                  mmu1_st+=DATA_SIZE;[m
+[32m+[m[32m//                                  if(miss_status == 2)[m
+[32m+[m[32m//                                  {[m
+[32m+[m[32m//                          int64_t curr_ticks = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);[m
+[32m+[m[32m//                          int64_t diff_ticks =  curr_ticks - curr_gemdroid_tick;[m
+[32m+[m[32m//                          curr_gemdroid_tick = curr_ticks;[m
+[32m+[m[32m//[m
+[32m+[m[32m//                          //printf("CPU %llu ", env->cpu_inst_counter);[m
+[32m+[m[32m//                          printf("%" PRId64  "\n",diff_ticks);[m
+[32m+[m[32m//[m
+[32m+[m[32m//[m
+[32m+[m[32m//                                     // env->cpu_inst_counter = 0;[m
+[32m+[m[32m//                                          // printf("total_insts %llu \n",new_total_insts);[m
+[32m+[m[32m//                                        //  new_total_insts = 0;[m
+[32m+[m[32m//                                          uint32_t phys_addr = cpu_get_phys_page_debug(env, addr);[m
+[32m+[m[32m//                                          printf("MMU_st %x %d\n",phys_addr, DATA_SIZE);[m
+[32m+[m[32m//                                          cpu_cycles+=DRAM_latency;[m
+[32m+[m[32m//                                  }[m
+[32m+[m[32m//                                  else if(miss_status == 1)[m
+[32m+[m[32m//                                  {[m
+[32m+[m[32m//                                             cpu_cycles+=8;[m
+[32m+[m[32m//                                  }[m
+[32m+[m[32m//                                  timer_print_flag = true;[m
+[32m+[m[32m//                                  cpu_inst_print_flag = false;[m
+[32m+[m[32m//          //GemDroid End[m
+         /* XXX: not efficient, but simple */[m
+         /* Note: relies on the fact that tlb_fill() does not remove the[m
+          * previous page from the TLB cache.  */[m
+[36m@@ -499,6 +812,37 @@[m [mvoid helper_be_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,[m
+     }[m
+ #endif[m
+ [m
+[32m+[m
+[32m+[m[32m//      //GemDroid Added[m
+[32m+[m[32m//                  miss_status = check_miss(addr, DATA_SIZE,WRITE_ACCESS);[m
+[32m+[m[32m//                  if(miss_status)   //if miss, print address[m
+[32m+[m[32m//                  {[m
+[32m+[m[32m//                          mmu2_st+=DATA_SIZE;[m
+[32m+[m[32m//                          if(miss_status == 2)[m
+[32m+[m[32m//                          {[m
+[32m+[m[32m//              int64_t curr_ticks = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);[m
+[32m+[m[32m//              int64_t diff_ticks =  curr_ticks - curr_gemdroid_tick;[m
+[32m+[m[32m//              curr_gemdroid_tick = curr_ticks;[m
+[32m+[m[32m//[m
+[32m+[m[32m//              //printf("CPU %llu ", env->cpu_inst_counter);[m
+[32m+[m[32m//              printf("%" PRId64  "\n",diff_ticks);[m
+[32m+[m[32m//[m
+[32m+[m[32m//                         // total_insts += env->cpu_inst_counter;[m
+[32m+[m[32m//                         // env->cpu_inst_counter = 0;[m
+[32m+[m[32m//                  // printf("total_insts %llu \n",new_total_insts);[m
+[32m+[m[32m//                          //new_total_insts = 0;[m
+[32m+[m[32m//                          uint32_t phys_addr = cpu_get_phys_page_debug(env, addr);[m
+[32m+[m[32m//                          printf("MMU_st %x %d\n",phys_addr, DATA_SIZE);[m
+[32m+[m[32m//                          cpu_cycles+=DRAM_latency;[m
+[32m+[m[32m//                          }[m
+[32m+[m[32m//                          else if(miss_status == 1)[m
+[32m+[m[32m//                          {[m
+[32m+[m[32m//                                  cpu_cycles+=8;[m
+[32m+[m[32m//                          }[m
+[32m+[m[32m//                          timer_print_flag = true;[m
+[32m+[m[32m//                          cpu_inst_print_flag = false;[m
+[32m+[m[32m//      //GemDroid End[m
+[32m+[m
+     haddr = addr + env->tlb_table[mmu_idx][index].addend;[m
+     glue(glue(st, SUFFIX), _be_p)((uint8_t *)haddr, val);[m
+ }[m
+[1mdiff --git a/slirp-android/ip_input.c b/slirp-android/ip_input.c[m
+[1mindex 33613c6..c83775c 100644[m
+[1m--- a/slirp-android/ip_input.c[m
+[1m+++ b/slirp-android/ip_input.c[m
+[36m@@ -38,6 +38,12 @@[m
+  * terms and conditions of the copyright.[m
+  */[m
+ [m
+[32m+[m[32m//GemDroid added[m
+[32m+[m[32m//For GemDroid Tracer Functionality[m
+[32m+[m[32m#include "gemdroid-tracer.h"[m
+[32m+[m[32m//GemDroid end[m
+[32m+[m
+[32m+[m
+ #include <slirp.h>[m
+ #include <qemu/osdep.h>[m
+ #include "ip_icmp.h"[m
+[1mdiff --git a/slirp-android/ip_output.c b/slirp-android/ip_output.c[m
+[1mindex 708383a..3f51b20 100644[m
+[1m--- a/slirp-android/ip_output.c[m
+[1m+++ b/slirp-android/ip_output.c[m
+[36m@@ -38,6 +38,11 @@[m
+  * terms and conditions of the copyright.[m
+  */[m
+ [m
+[32m+[m[32m//GemDroid added[m
+[32m+[m[32m//For GemDroid Tracer Functionality[m
+[32m+[m[32m#include "gemdroid-tracer.h"[m
+[32m+[m[32m//GemDroid end[m
+[32m+[m
+ #include <slirp.h>[m
+ [m
+ u_int16_t ip_id;[m
+[1mdiff --git a/target-arm/translate.c b/target-arm/translate.c[m
+[1mindex 78d3740..2debf67 100644[m
+[1m--- a/target-arm/translate.c[m
+[1m+++ b/target-arm/translate.c[m
+[36m@@ -35,6 +35,12 @@[m
+ #define GEN_HELPER 1[m
+ #include "helper.h"[m
+ [m
+[32m+[m[32m//GemDroid added[m
+[32m+[m[32m//For GemDroid Tracer Functionality[m
+[32m+[m[32m#include "gemdroid-tracer.h"[m
+[32m+[m[32m//GemDroid end[m
+[32m+[m
+[32m+[m
+ #define ENABLE_ARCH_4T    arm_feature(env, ARM_FEATURE_V4T)[m
+ #define ENABLE_ARCH_5     arm_feature(env, ARM_FEATURE_V5)[m
+ /* currently all emulated v5 cores are also v5TE, so don't bother */[m
+[1mdiff --git a/target-i386/translate.c b/target-i386/translate.c[m
+[1mindex 65e6274..e3c21c0 100644[m
+[1m--- a/target-i386/translate.c[m
+[1m+++ b/target-i386/translate.c[m
+[36m@@ -16,6 +16,12 @@[m
+  * You should have received a copy of the GNU Lesser General Public[m
+  * License along with this library; if not, see <http://www.gnu.org/licenses/>.[m
+  */[m
+[32m+[m
+[32m+[m[32m//GemDroid added[m
+[32m+[m[32m//For GemDroid Tracer Functionality[m
+[32m+[m[32m#include "gemdroid-tracer.h"[m
+[32m+[m[32m//GemDroid end[m
+[32m+[m
+ #include <stdarg.h>[m
+ #include <stdlib.h>[m
+ #include <stdio.h>[m
+[1mdiff --git a/translate-all.c b/translate-all.c[m
+[1mindex a77b00a..816e5da 100644[m
+[1m--- a/translate-all.c[m
+[1m+++ b/translate-all.c[m
+[36m@@ -41,6 +41,14 @@[m
+ #include "translate-all.h"[m
+ #include "qemu/timer.h"[m
+ [m
+[32m+[m
+[32m+[m[32m//GemDroid added[m
+[32m+[m[32m//For GemDroid Tracer Functionality[m
+[32m+[m[32m#include "gemdroid-tracer.h"[m
+[32m+[m[32m//GemDroid end[m
+[32m+[m
+[32m+[m
+[32m+[m
+ //#define DEBUG_TB_INVALIDATE[m
+ //#define DEBUG_FLUSH[m
+ /* make various TB consistency checks */[m

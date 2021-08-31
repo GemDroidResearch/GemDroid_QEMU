@@ -156,8 +156,8 @@ common_LOCAL_SRC_FILES += \
     backends/msmouse.c \
     cpu-exec.c  \
     cputlb.c \
-    exec.c \
     gemdroid-tracer.c \
+    exec.c \
     main-loop.c \
     memory-android.c \
     monitor-android.c \

@@ -21,8 +21,12 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
-//pras
+
+//GemDroid added
+//For GemDroid Tracer Functionality
 #include "gemdroid-tracer.h"
+//GemDroid end
+
 #include "qemu/timer.h"
 
 #define DATA_SIZE (1 << SHIFT)
@@ -147,7 +151,7 @@ static inline DATA_TYPE glue(io_read, SUFFIX)(CPUArchState *env,
 static __attribute__((unused))
 #endif
 WORD_TYPE helper_le_ld_name(CPUArchState *env, target_ulong addr, int mmu_idx,
-                            uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req)
+                            uintptr_t retaddr)
 {
     int index = (addr >> TARGET_PAGE_BITS) & (CPU_TLB_SIZE - 1);
     target_ulong tlb_addr = env->tlb_table[mmu_idx][index].ADDR_READ;
@@ -157,6 +161,44 @@ WORD_TYPE helper_le_ld_name(CPUArchState *env, target_ulong addr, int mmu_idx,
     /* Adjust the given return address.  */
     retaddr -= GETPC_ADJ;
 
+    //GemDroid Added
+    //GemDroid INITS THE Dinero Cache
+    if(first_flag == false)
+    {
+       init_cache();
+       first_flag = true;
+       cpu_cycles = 0;
+    }
+
+    // GemDroid adds - print tick
+    if(MMU_tracer && timer_print_flag) {
+        //printf("MS: %" PRId64 "\n", cpu_get_ticks()/1000 - last_ticks);
+        last_ticks = cpu_get_ticks()/1000;
+        timer_print_flag = false;
+    }
+
+    //GemDroid added -- print cpu_inst count before printing loads/stores
+    //GemDroid adds - Print icount for each BB
+     if(ICOUNT_tracer)
+     {
+       if(env->cpu_inst_counter != 0 && cpu_inst_print_flag)
+       {
+         //printf("CPU %llu %lu \t", cpu_cycles, env->cpu_inst_counter);
+       printf("CPUSummary %llu \t", env->cpu_inst_counter);
+       printf("%lu \t %lu \t %lu \n",this_phase_l1_access,this_phase_l1_miss,this_phase_l2_miss);
+
+       cpu_cycles+=env->cpu_inst_counter;
+       total_insts+=env->cpu_inst_counter;
+       env->cpu_inst_counter = 0;
+
+       cpu_inst_print_flag = false;
+       this_phase_l2_miss = 0;
+       this_phase_l1_miss = 0;
+       this_phase_l1_access = 0;
+       }
+     }
+    // GemDroid ends
+    
     /* If the TLB entry is for a different page, reload and try again.  */
     if ((addr & TARGET_PAGE_MASK)
          != (tlb_addr & (TARGET_PAGE_MASK | TLB_INVALID_MASK))) {
@@ -176,6 +218,16 @@ WORD_TYPE helper_le_ld_name(CPUArchState *env, target_ulong addr, int mmu_idx,
             goto do_unaligned_access;
         }
         ioaddr = env->iotlb[mmu_idx][index];
+
+        //GemDroid Added
+	if(MMU_tracer) {
+            //printf("IO ld %u %d\n",(uint32_t)addr, DATA_SIZE);
+            IO_ld+=DATA_SIZE;
+            cpu_cycles+=DRAM_latency;
+            timer_print_flag = true;
+            cpu_inst_print_flag = false;
+        }
+	//GemDroid end
 
         /* ??? Note that the io helpers always read data in the target
            byte ordering.  We should push the LE/BE request down into io.  */
@@ -195,12 +247,47 @@ WORD_TYPE helper_le_ld_name(CPUArchState *env, target_ulong addr, int mmu_idx,
 #ifdef ALIGNED_ONLY
         do_unaligned_access(env, addr, READ_ACCESS_TYPE, mmu_idx, retaddr);
 #endif
+
+        //GemDroid Added
+	if(MMU_tracer) {
+              miss_status = check_miss(addr, DATA_SIZE,READ_ACCESS);
+            if(miss_status)   //if miss, print address
+                        {
+                        mmu1_ld+=DATA_SIZE;
+                        if(miss_status == 2)// A L2 miss
+                        {
+                int64_t curr_ticks = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
+                int64_t diff_ticks =  curr_ticks - curr_gemdroid_tick;
+                curr_gemdroid_tick = curr_ticks;
+
+                printf("CPU %llu ", env->cpu_inst_counter);
+                printf("%" PRId64  "\n",diff_ticks);
+                        // printf("total_insts %llu \n",new_total_insts);
+                        new_total_insts = 0;
+                        env->cpu_inst_counter = 0;
+                        uint32_t phys_addr = cpu_get_phys_page_debug(env, addr);
+                        printf("MMU_ld %x %d\n", phys_addr, DATA_SIZE);
+                        cpu_cycles+=DRAM_latency;
+                        }
+                        else if(miss_status == 1) // A L1 miss
+                        {
+                           cpu_cycles+=8;
+                        }
+                        timer_print_flag = true;
+                        cpu_inst_print_flag = false;
+                }
+//             else
+//                     printf("\n HIT");
+	}
+        //GemDroid end
+
+
         addr1 = addr & ~(DATA_SIZE - 1);
         addr2 = addr1 + DATA_SIZE;
         /* Note the adjustment at the beginning of the function.
            Undo that for the recursion.  */
-        res1 = helper_le_ld_name(env, addr1, mmu_idx, retaddr + GETPC_ADJ, /*pras*/mem_req);
-        res2 = helper_le_ld_name(env, addr2, mmu_idx, retaddr + GETPC_ADJ, /*pras*/mem_req);
+        res1 = helper_le_ld_name(env, addr1, mmu_idx, retaddr + GETPC_ADJ);
+        res2 = helper_le_ld_name(env, addr2, mmu_idx, retaddr + GETPC_ADJ);
         shift = (addr & (DATA_SIZE - 1)) * 8;
 
         /* Little-endian combine.  */
@@ -216,10 +303,47 @@ WORD_TYPE helper_le_ld_name(CPUArchState *env, target_ulong addr, int mmu_idx,
 #endif
 
     haddr = addr + env->tlb_table[mmu_idx][index].addend;
+
+         //GemDroid Added
+	 if(MMU_tracer) {
+         miss_status = check_miss(addr, DATA_SIZE,READ_ACCESS);
+         if(miss_status)   //if miss, print address
+                 {
+                 mmu2_ld+=DATA_SIZE;
+                         if(miss_status == 2)
+                         {
+                 int64_t curr_ticks = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
+                 int64_t diff_ticks =  curr_ticks - curr_gemdroid_tick;
+                 curr_gemdroid_tick = curr_ticks;
+
+                         printf("CPU %llu ", env->cpu_inst_counter);
+                 printf("%" PRId64  "\n",diff_ticks);
+
+                                 env->cpu_inst_counter = 0;
+                                 // printf("total_insts %llu \n",new_total_insts);
+                                 new_total_insts = 0;
+                                 uint32_t phys_addr = cpu_get_phys_page_debug(env, addr);
+                                 printf("MMU_ld %x %d\n", phys_addr, DATA_SIZE);
+                                 cpu_cycles+=DRAM_latency;
+                         }
+                         else if(miss_status == 1)
+                         {
+                         cpu_cycles+=8;
+                         }
+
+                         timer_print_flag = true;
+                         cpu_inst_print_flag = false;
+                 }
+         //else
+         //printf("\n HIT");
+	}
+      //GemDroid end
+
+
 #if DATA_SIZE == 1
-    res = glue(glue(ld, LSUFFIX), _p)((uint8_t *)haddr, /*pras*/mem_req);
+    res = glue(glue(ld, LSUFFIX), _p)((uint8_t *)haddr);
 #else
-    res = glue(glue(ld, LSUFFIX), _le_p)((uint8_t *)haddr, /*pras*/mem_req);
+    res = glue(glue(ld, LSUFFIX), _le_p)((uint8_t *)haddr);
 #endif
     return res;
 }
@@ -229,12 +353,49 @@ WORD_TYPE helper_le_ld_name(CPUArchState *env, target_ulong addr, int mmu_idx,
 static __attribute__((unused))
 #endif
 WORD_TYPE helper_be_ld_name(CPUArchState *env, target_ulong addr, int mmu_idx,
-                            uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req)
+                            uintptr_t retaddr)
 {
     int index = (addr >> TARGET_PAGE_BITS) & (CPU_TLB_SIZE - 1);
     target_ulong tlb_addr = env->tlb_table[mmu_idx][index].ADDR_READ;
     uintptr_t haddr;
     DATA_TYPE res;
+
+    //GemDroid Added
+    //GemDroid INITS THE Dinero Cache
+    if(first_flag == false)
+    {
+       init_cache();
+       first_flag = true;
+       cpu_cycles = 0;
+    }
+
+    // GemDroid adds - print tick
+    if(MMU_tracer && timer_print_flag) {     
+	//printf("MS: %" PRId64 "\n", cpu_get_ticks()/1000 - last_ticks);
+        last_ticks = cpu_get_ticks()/1000;
+        timer_print_flag = false;
+    }
+    //GemDroid added -- print cpu_inst count before printing loads/stores
+    //GemDroid adds - Print icount for each BB
+     if(ICOUNT_tracer)
+     {
+       if(env->cpu_inst_counter != 0 && cpu_inst_print_flag)
+       {
+        //printf("CPU %llu %lu \t", cpu_cycles, env->cpu_inst_counter);
+        printf("CPUSummary %llu \t", env->cpu_inst_counter);
+        printf("%lu \t %lu \t%lu \n",this_phase_l1_access,this_phase_l1_miss,this_phase_l2_miss);
+
+        cpu_cycles+=env->cpu_inst_counter;
+        total_insts+=env->cpu_inst_counter;
+        env->cpu_inst_counter = 0;
+
+        cpu_inst_print_flag = false;
+        this_phase_l2_miss = 0;
+        this_phase_l1_miss = 0;
+        this_phase_l1_access = 0;
+       }
+     }
+      //GemDroid end
 
     /* Adjust the given return address.  */
     retaddr -= GETPC_ADJ;
@@ -259,6 +420,17 @@ WORD_TYPE helper_be_ld_name(CPUArchState *env, target_ulong addr, int mmu_idx,
         }
         ioaddr = env->iotlb[mmu_idx][index];
 
+
+        //GemDroid Added
+	if(MMU_tracer) {          
+            //printf("IO ld %u %d\n",(uint32_t)addr, DATA_SIZE);
+	    IO_ld+=DATA_SIZE;
+            cpu_cycles+=DRAM_latency;
+            timer_print_flag = true;
+            cpu_inst_print_flag = false;
+        }
+       //GemDroid end
+
         /* ??? Note that the io helpers always read data in the target
            byte ordering.  We should push the LE/BE request down into io.  */
         res = glue(io_read, SUFFIX)(env, ioaddr, addr, retaddr);
@@ -277,12 +449,48 @@ WORD_TYPE helper_be_ld_name(CPUArchState *env, target_ulong addr, int mmu_idx,
 #ifdef ALIGNED_ONLY
         do_unaligned_access(env, addr, READ_ACCESS_TYPE, mmu_idx, retaddr);
 #endif
+
+        //GemDroid Added
+	if(MMU_tracer) {
+              miss_status = check_miss(addr, DATA_SIZE,READ_ACCESS);
+            if(miss_status)   //if miss, print address
+                        {
+                        mmu1_ld+=DATA_SIZE;
+                        if(miss_status == 2)// A L2 miss
+                        {
+                int64_t curr_ticks = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
+                int64_t diff_ticks =  curr_ticks - curr_gemdroid_tick;
+                curr_gemdroid_tick = curr_ticks;
+
+                printf("CPU %llu ", env->cpu_inst_counter);
+                printf("%" PRId64  "\n",diff_ticks);
+                        // printf("total_insts %llu \n",new_total_insts);
+                        new_total_insts = 0;
+                        env->cpu_inst_counter = 0;
+                        uint32_t phys_addr = cpu_get_phys_page_debug(env, addr);
+                        printf("MMU_ld %x %d\n", phys_addr, DATA_SIZE);
+                        cpu_cycles+=DRAM_latency;
+                        }
+                        else if(miss_status == 1) // A L1 miss
+                        {
+                           cpu_cycles+=8;
+                        }
+                        timer_print_flag = true;
+                        cpu_inst_print_flag = false;
+                }
+//             else
+//                     printf("\n HIT");
+	}
+        //GemDroid end
+
+
+
         addr1 = addr & ~(DATA_SIZE - 1);
         addr2 = addr1 + DATA_SIZE;
         /* Note the adjustment at the beginning of the function.
            Undo that for the recursion.  */
-        res1 = helper_be_ld_name(env, addr1, mmu_idx, retaddr + GETPC_ADJ, /*pras*/mem_req);
-        res2 = helper_be_ld_name(env, addr2, mmu_idx, retaddr + GETPC_ADJ, /*pras*/mem_req);
+        res1 = helper_be_ld_name(env, addr1, mmu_idx, retaddr + GETPC_ADJ);
+        res2 = helper_be_ld_name(env, addr2, mmu_idx, retaddr + GETPC_ADJ);
         shift = (addr & (DATA_SIZE - 1)) * 8;
 
         /* Big-endian combine.  */
@@ -297,17 +505,53 @@ WORD_TYPE helper_be_ld_name(CPUArchState *env, target_ulong addr, int mmu_idx,
     }
 #endif
 
+        //GemDroid Added
+	//in same page
+	if(MMU_tracer) {
+        miss_status = check_miss(addr, DATA_SIZE,READ_ACCESS);
+        if(miss_status)   //if miss, print address
+                {
+                mmu2_ld+=DATA_SIZE;
+                        if(miss_status == 2)
+                        {
+                int64_t curr_ticks = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
+                int64_t diff_ticks =  curr_ticks - curr_gemdroid_tick;
+                curr_gemdroid_tick = curr_ticks;
+
+                printf("CPU %llu ", env->cpu_inst_counter);
+                printf("%" PRId64  "\n",diff_ticks);
+
+                                env->cpu_inst_counter = 0;
+                                // printf("total_insts %llu \n",new_total_insts);
+                                new_total_insts = 0;
+                                uint32_t phys_addr = cpu_get_phys_page_debug(env, addr);
+                                printf("MMU_ld %x %d\n", phys_addr, DATA_SIZE);
+                                cpu_cycles+=DRAM_latency;
+                        }
+                        else if(miss_status == 1)
+                        {
+                        cpu_cycles+=8;
+                        }
+
+                        timer_print_flag = true;
+                        cpu_inst_print_flag = false;
+                }
+        //else
+        //printf("\n HIT");
+	}
+       //GemDroid end
+
     haddr = addr + env->tlb_table[mmu_idx][index].addend;
-    res = glue(glue(ld, LSUFFIX), _be_p)((uint8_t *)haddr, /*pras*/mem_req);
+    res = glue(glue(ld, LSUFFIX), _be_p)((uint8_t *)haddr);
     return res;
 }
 #endif /* DATA_SIZE > 1 */
 
 DATA_TYPE
 glue(glue(helper_ld, SUFFIX), MMUSUFFIX)(CPUArchState *env, target_ulong addr,
-                                         int mmu_idx, /*pras*/MEM_REQ_ORIGIN mem_req)
+                                         int mmu_idx)
 {
-    return helper_te_ld_name (env, addr, mmu_idx, GETRA(), /*pras*/mem_req);
+    return helper_te_ld_name (env, addr, mmu_idx, GETRA());
 }
 
 #ifndef SOFTMMU_CODE_ACCESS
@@ -316,16 +560,16 @@ glue(glue(helper_ld, SUFFIX), MMUSUFFIX)(CPUArchState *env, target_ulong addr,
    avoid this for 64-bit data, or for 32-bit data on 32-bit host.  */
 #if DATA_SIZE * 8 < TCG_TARGET_REG_BITS
 WORD_TYPE helper_le_lds_name(CPUArchState *env, target_ulong addr,
-                             int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req)
+                             int mmu_idx, uintptr_t retaddr)
 {
-    return (SDATA_TYPE)helper_le_ld_name(env, addr, mmu_idx, retaddr, /*pras*/mem_req);
+    return (SDATA_TYPE)helper_le_ld_name(env, addr, mmu_idx, retaddr);
 }
 
 # if DATA_SIZE > 1
 WORD_TYPE helper_be_lds_name(CPUArchState *env, target_ulong addr,
-                             int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req)
+                             int mmu_idx, uintptr_t retaddr)
 {
-    return (SDATA_TYPE)helper_be_ld_name(env, addr, mmu_idx, retaddr, /*pras*/mem_req);
+    return (SDATA_TYPE)helper_be_ld_name(env, addr, mmu_idx, retaddr);
 }
 # endif
 #endif
@@ -359,11 +603,38 @@ static inline void glue(io_write, SUFFIX)(CPUArchState *env,
 }
 
 void helper_le_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,
-                       int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req)
+                       int mmu_idx, uintptr_t retaddr)
 {
     int index = (addr >> TARGET_PAGE_BITS) & (CPU_TLB_SIZE - 1);
     target_ulong tlb_addr = env->tlb_table[mmu_idx][index].addr_write;
     uintptr_t haddr;
+
+      //GemDroid Added
+      //print tick
+	if(MMU_tracer && timer_print_flag) {
+       //printf("MS: %" PRId64 "\n", cpu_get_ticks()/1000 - last_ticks);
+       last_ticks = cpu_get_ticks()/1000;
+       timer_print_flag = false;
+    }
+    //print cpu_inst count before printing loads/stores
+     if(ICOUNT_tracer)
+     {
+       if(env->cpu_inst_counter != 0 && cpu_inst_print_flag)
+       {
+       //printf("CPU %llu %lu \t", cpu_cycles, env->cpu_inst_counter);
+       printf("CPUSummary %llu \t", env->cpu_inst_counter);
+       //fflush(stdout);
+       printf("%lu \t %lu \t %lu\n",this_phase_l1_access,this_phase_l1_miss,this_phase_l2_miss);
+       total_insts+=env->cpu_inst_counter;
+       cpu_cycles+=env->cpu_inst_counter;
+       cpu_inst_print_flag = false;
+       env->cpu_inst_counter = 0;
+       this_phase_l2_miss = 0;
+       this_phase_l1_miss = 0;
+       this_phase_l1_access = 0;
+       }
+     }
+       //GemDroid End
 
     /* Adjust the given return address.  */
     retaddr -= GETPC_ADJ;
@@ -387,6 +658,16 @@ void helper_le_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,
             goto do_unaligned_access;
         }
         ioaddr = env->iotlb[mmu_idx][index];
+
+        //GemDroid Added
+ 	if(MMU_tracer) {	
+                  //printf("IO ld %u %d\n",(uint32_t)addr, DATA_SIZE);
+                  IO_st+=DATA_SIZE;
+                  cpu_cycles+=DRAM_latency;
+                  timer_print_flag = true;
+                  cpu_inst_print_flag = false;
+        }
+	//GemDroid End
 
         /* ??? Note that the io helpers always read data in the target
            byte ordering.  We should push the LE/BE request down into io.  */
@@ -404,6 +685,39 @@ void helper_le_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,
 #ifdef ALIGNED_ONLY
         do_unaligned_access(env, addr, 1, mmu_idx, retaddr);
 #endif
+
+
+        //GemDroid Added
+	if(MMU_tracer) {
+        miss_status = check_miss(addr, DATA_SIZE,WRITE_ACCESS);
+        if(miss_status)   //if miss, print address
+         {
+                mmu1_st+=DATA_SIZE;
+                if(miss_status == 2)
+                {
+                  int64_t curr_ticks = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
+                  int64_t diff_ticks =  curr_ticks - curr_gemdroid_tick;
+                  curr_gemdroid_tick = curr_ticks;
+
+                  printf("CPU %llu ", env->cpu_inst_counter);
+                  printf("%" PRId64  "\n",diff_ticks);
+                  env->cpu_inst_counter = 0;
+                  // printf("total_insts %llu \n",new_total_insts);
+                  new_total_insts = 0;
+                  uint32_t phys_addr = cpu_get_phys_page_debug(env, addr);
+                  printf("MMU_st %x %d\n",phys_addr, DATA_SIZE);
+                  cpu_cycles+=DRAM_latency;
+                 }
+                 else if(miss_status == 1)
+                 {
+                            cpu_cycles+=8;
+                 }
+                 timer_print_flag = true;
+                 cpu_inst_print_flag = false;
+         }
+	}
+        //GemDroid End
+
         /* XXX: not efficient, but simple */
         /* Note: relies on the fact that tlb_fill() does not remove the
          * previous page from the TLB cache.  */
@@ -413,7 +727,7 @@ void helper_le_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,
             /* Note the adjustment at the beginning of the function.
                Undo that for the recursion.  */
             glue(helper_ret_stb, MMUSUFFIX)(env, addr + i, val8,
-                                            mmu_idx, retaddr + GETPC_ADJ, /*pras*/mem_req);
+                                            mmu_idx, retaddr + GETPC_ADJ);
         }
         return;
     }
@@ -425,17 +739,50 @@ void helper_le_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,
     }
 #endif
 
+    //GemDroid Added
+	if(MMU_tracer) {
+                miss_status = check_miss(addr, DATA_SIZE,WRITE_ACCESS);
+                if(miss_status)   //if miss, print address
+                {
+                        mmu2_st+=DATA_SIZE;
+                        if(miss_status == 2)
+                        {
+            int64_t curr_ticks = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
+            int64_t diff_ticks =  curr_ticks - curr_gemdroid_tick;
+            curr_gemdroid_tick = curr_ticks;
+
+            printf("CPU %llu ", env->cpu_inst_counter);
+            printf("%" PRId64  "\n",diff_ticks);
+
+                        total_insts += env->cpu_inst_counter;
+                        env->cpu_inst_counter = 0;
+                       // printf("total_insts %llu \n",new_total_insts);
+                        new_total_insts = 0;
+                        uint32_t phys_addr = cpu_get_phys_page_debug(env, addr);
+                        printf("MMU_st %x %d\n",phys_addr, DATA_SIZE);
+                        cpu_cycles+=DRAM_latency;
+                        }
+                        else if(miss_status == 1)
+                        {
+                                cpu_cycles+=8;
+                        }
+                        timer_print_flag = true;
+                        cpu_inst_print_flag = false;
+                }
+	}
+    //GemDroid End
+
     haddr = addr + env->tlb_table[mmu_idx][index].addend;
 #if DATA_SIZE == 1
-    glue(glue(st, SUFFIX), _p)((uint8_t *)haddr, val, /*pras*/mem_req);
+    glue(glue(st, SUFFIX), _p)((uint8_t *)haddr, val);
 #else
-    glue(glue(st, SUFFIX), _le_p)((uint8_t *)haddr, val, /*pras*/mem_req);
+    glue(glue(st, SUFFIX), _le_p)((uint8_t *)haddr, val);
 #endif
 }
 
 #if DATA_SIZE > 1
 void helper_be_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,
-                       int mmu_idx, uintptr_t retaddr, /*pras*/MEM_REQ_ORIGIN mem_req)
+                       int mmu_idx, uintptr_t retaddr)
 {
     int index = (addr >> TARGET_PAGE_BITS) & (CPU_TLB_SIZE - 1);
     target_ulong tlb_addr = env->tlb_table[mmu_idx][index].addr_write;
@@ -443,6 +790,35 @@ void helper_be_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,
 
     /* Adjust the given return address.  */
     retaddr -= GETPC_ADJ;
+
+      //GemDroid Added
+      //print tick
+      if(MMU_tracer && timer_print_flag) { 
+	//printf("MS: %" PRId64 "\n", cpu_get_ticks()/1000 - last_ticks);
+         last_ticks = cpu_get_ticks()/1000;
+         timer_print_flag = false;
+	}
+     //print cpu_inst count before printing loads/stores
+      if(ICOUNT_tracer)
+      {
+        if(env->cpu_inst_counter != 0 && cpu_inst_print_flag)
+        {
+       //printf("CPU %llu %lu \t", cpu_cycles, env->cpu_inst_counter);
+       printf("CPUSummary %llu \t", env->cpu_inst_counter);
+       //fflush(stdout);
+       printf("%lu \t %lu \t %lu\n",this_phase_l1_access,this_phase_l1_miss,this_phase_l2_miss);
+       total_insts+=env->cpu_inst_counter;
+       cpu_cycles+=env->cpu_inst_counter;
+       cpu_inst_print_flag = false;
+       env->cpu_inst_counter = 0;
+       this_phase_l2_miss = 0;
+       this_phase_l1_miss = 0;
+       this_phase_l1_access = 0;
+        }
+      }
+      //GemDroid End
+
+
 
     /* If the TLB entry is for a different page, reload and try again.  */
     if ((addr & TARGET_PAGE_MASK)
@@ -464,6 +840,16 @@ void helper_be_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,
         }
         ioaddr = env->iotlb[mmu_idx][index];
 
+        //GemDroid Added
+	if(MMU_tracer) {  
+		  //printf("IO ld %u %d\n",(uint32_t)addr, DATA_SIZE);
+                  IO_st+=DATA_SIZE;
+                  cpu_cycles+=DRAM_latency;
+                  timer_print_flag = true;
+                  cpu_inst_print_flag = false;
+         }
+	 //GemDroid End
+
         /* ??? Note that the io helpers always read data in the target
            byte ordering.  We should push the LE/BE request down into io.  */
         val = TGT_BE(val);
@@ -480,6 +866,38 @@ void helper_be_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,
 #ifdef ALIGNED_ONLY
         do_unaligned_access(env, addr, 1, mmu_idx, retaddr);
 #endif
+
+
+        //GemDroid Added
+	if(MMU_tracer) {
+                        miss_status = check_miss(addr, DATA_SIZE,WRITE_ACCESS);
+                        if(miss_status)   //if miss, print address
+                        {
+                                mmu1_st+=DATA_SIZE;
+                                if(miss_status == 2)
+                                {
+                        int64_t curr_ticks = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
+                        int64_t diff_ticks =  curr_ticks - curr_gemdroid_tick;
+                        curr_gemdroid_tick = curr_ticks;
+
+                        printf("CPU %llu ", env->cpu_inst_counter);
+                        printf("%" PRId64  "\n",diff_ticks);
+                                 env->cpu_inst_counter = 0;
+                                 // printf("total_insts %llu \n",new_total_insts);
+                                 new_total_insts = 0;
+                                 uint32_t phys_addr = cpu_get_phys_page_debug(env, addr);
+                                 printf("MMU_st %x %d\n",phys_addr, DATA_SIZE);
+                                 cpu_cycles+=DRAM_latency;
+                                }
+                                else if(miss_status == 1)
+                                {
+                                  cpu_cycles+=8;
+                                }
+                                timer_print_flag = true;
+                                cpu_inst_print_flag = false;
+    		  }	                				
+	}
+        //GemDroid End
         /* XXX: not efficient, but simple */
         /* Note: relies on the fact that tlb_fill() does not remove the
          * previous page from the TLB cache.  */
@@ -489,7 +907,7 @@ void helper_be_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,
             /* Note the adjustment at the beginning of the function.
                Undo that for the recursion.  */
             glue(helper_ret_stb, MMUSUFFIX)(env, addr + i, val8,
-                                            mmu_idx, retaddr + GETPC_ADJ, /*pras*/mem_req);
+                                            mmu_idx, retaddr + GETPC_ADJ);
         }
         return;
     }
@@ -501,16 +919,50 @@ void helper_be_st_name(CPUArchState *env, target_ulong addr, DATA_TYPE val,
     }
 #endif
 
+
+       //GemDroid Added
+	if(MMU_tracer) {
+                miss_status = check_miss(addr, DATA_SIZE,WRITE_ACCESS);
+                if(miss_status)   //if miss, print address
+                {
+                        mmu2_st+=DATA_SIZE;
+                        if(miss_status == 2)
+                        {
+            int64_t curr_ticks = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
+            int64_t diff_ticks =  curr_ticks - curr_gemdroid_tick;
+            curr_gemdroid_tick = curr_ticks;
+
+            printf("CPU %llu ", env->cpu_inst_counter);
+            printf("%" PRId64  "\n",diff_ticks);
+
+                       total_insts += env->cpu_inst_counter;
+                       env->cpu_inst_counter = 0;
+                       // printf("total_insts %llu \n",new_total_insts);
+                       new_total_insts = 0;
+                        uint32_t phys_addr = cpu_get_phys_page_debug(env, addr);
+                        printf("MMU_st %x %d\n",phys_addr, DATA_SIZE);
+                        cpu_cycles+=DRAM_latency;
+                        }
+                        else if(miss_status == 1)
+                        {
+                                cpu_cycles+=8;
+                        }
+                        timer_print_flag = true;
+                        cpu_inst_print_flag = false;
+    	   }
+  	}
+      //GemDroid End
+
     haddr = addr + env->tlb_table[mmu_idx][index].addend;
-    glue(glue(st, SUFFIX), _be_p)((uint8_t *)haddr, val, /*pras*/mem_req);
+    glue(glue(st, SUFFIX), _be_p)((uint8_t *)haddr, val);
 }
 #endif /* DATA_SIZE > 1 */
 
 void
 glue(glue(helper_st, SUFFIX), MMUSUFFIX)(CPUArchState *env, target_ulong addr,
-                                         DATA_TYPE val, int mmu_idx, /*pras*/MEM_REQ_ORIGIN mem_req)
+                                         DATA_TYPE val, int mmu_idx)
 {
-    helper_te_st_name(env, addr, val, mmu_idx, GETRA(), /*pras*/mem_req);
+    helper_te_st_name(env, addr, val, mmu_idx, GETRA());
 }
 
 #endif /* !defined(SOFTMMU_CODE_ACCESS) */
