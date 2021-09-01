@@ -2,7 +2,7 @@
 
 ## System Requirement
 
-AOSP android-7.1.2_r36
+AOSP android-11.0.0_r10
 
 ## To Patch
 
