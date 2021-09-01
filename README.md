@@ -2,7 +2,7 @@
 
 ## System Requirement
 
-AOSP android-11.0.0_r10
+AOSP [android-11.0.0_r10](https://source.android.com/setup/build/downloading)
 
 ## To Patch
 
